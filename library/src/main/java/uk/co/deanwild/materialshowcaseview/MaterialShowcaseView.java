@@ -41,6 +41,7 @@ import uk.co.deanwild.materialshowcaseview.target.ViewTarget;
  */
 public class MaterialShowcaseView extends FrameLayout implements View.OnTouchListener, View.OnClickListener {
 
+    List<IShowcaseListener> mListeners; // external listeners who want to observe when we show and dismiss
     private int mOldHeight;
     private int mOldWidth;
     private Bitmap mBitmap;// = new WeakReference<>(null);
@@ -52,7 +53,6 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
     private int mYPosition;
     private boolean mWasDismissed = false;
     private int mShapePadding = ShowcaseConfig.DEFAULT_SHAPE_PADDING;
-
     private View mContentBox;
     private TextView mTitleTextView;
     private TextView mContentTextView;
@@ -73,7 +73,6 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
     private int mRightMargin = 0;
     private boolean mSingleUse = false; // should display only once
     private PrefsManager mPrefsManager; // used to store state doe single use mode
-    List<IShowcaseListener> mListeners; // external listeners who want to observe when we show and dismiss
     private UpdateOnGlobalLayout mLayoutListener;
     private IDetachedListener mDetachedListener;
     private boolean mTargetTouchable = false;
@@ -84,25 +83,14 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         init(context);
     }
 
-    public MaterialShowcaseView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init(context);
-    }
-
-    public MaterialShowcaseView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init(context);
-    }
-
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public MaterialShowcaseView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        init(context);
-    }
-
-
     private void init(Context context) {
         setWillNotDraw(false);
+
+        // Set default padding
+        if (ShowcaseConfig.DEFAULT_SHAPE_PADDING == -1) {
+            ShowcaseConfig.DEFAULT_SHAPE_PADDING = context.getResources().getDimensionPixelSize(R.dimen.material_showcase_shape_padding);
+            mShapePadding = ShowcaseConfig.DEFAULT_SHAPE_PADDING;
+        }
 
         // create our animation factory
         mAnimationFactory = new AnimationFactory();
@@ -128,6 +116,41 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         mDismissButton.setOnClickListener(this);
     }
 
+    public MaterialShowcaseView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init(context);
+    }
+
+    public MaterialShowcaseView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        init(context);
+    }
+
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public MaterialShowcaseView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        super(context, attrs, defStyleAttr, defStyleRes);
+        init(context);
+    }
+
+    /**
+     * Static helper method for resetting single use flag
+     *
+     * @param context
+     * @param showcaseID
+     */
+    public static void resetSingleUse(Context context, String showcaseID) {
+        PrefsManager.resetShowcase(context, showcaseID);
+    }
+
+    /**
+     * Static helper method for resetting all single use flags
+     *
+     * @param context
+     */
+    public static void resetAll(Context context) {
+        PrefsManager.resetAll(context);
+    }
 
     /**
      * Interesting drawing stuff.
@@ -203,52 +226,6 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
 
     }
 
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        if (mDismissOnTouch) {
-            hide();
-        }
-        if(mTargetTouchable && mTarget.getBounds().contains((int)event.getX(), (int)event.getY())){
-            if(mDismissOnTargetTouch){
-                hide();
-            }
-            return false;
-        }
-        return true;
-    }
-
-
-    private void notifyOnDisplayed() {
-
-		if(mListeners != null){
-			for (IShowcaseListener listener : mListeners) {
-				listener.onShowcaseDisplayed(this);
-			}
-		}
-    }
-
-    /**
-     * Notify when {@link #singleUse(String)} is enabled and showcase has been fired before
-     * @see #singleUse(String)
-     */
-    private void notifyOnSkipped() {
-
-		if(mListeners != null){
-			for (IShowcaseListener listener : mListeners) {
-				listener.onShowcaseSkipped(this);
-			}
-            mListeners.clear();
-            mListeners = null;
-		}
-
-        /**
-         * internal listener used by sequence for storing progress within the sequence
-         */
-        if (mDetachedListener != null) {
-            mDetachedListener.onShowcaseDetached(this, mWasDismissed);
-        }
-    }
-
     private void notifyOnDismissed() {
         if (mListeners != null) {
             for (IShowcaseListener listener : mListeners) {
@@ -265,6 +242,71 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         if (mDetachedListener != null) {
             mDetachedListener.onShowcaseDetached(this, mWasDismissed);
         }
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        if (mDismissOnTouch) {
+            hide();
+        }
+        if(mTargetTouchable && mTarget.getBounds().contains((int)event.getX(), (int)event.getY())){
+            if(mDismissOnTargetTouch){
+                hide();
+            }
+            return false;
+        }
+        return true;
+    }
+
+    public void hide() {
+
+        /**
+         * This flag is used to indicate to onDetachedFromWindow that the showcase view was dismissed purposefully (by the user or programmatically)
+         */
+        mWasDismissed = true;
+
+        if (mShouldAnimate) {
+            fadeOut();
+        } else {
+            removeFromWindow();
+        }
+    }
+
+    public void fadeOut() {
+
+        mAnimationFactory.fadeOutView(this, mFadeDurationInMillis, new IAnimationFactory.AnimationEndListener() {
+            @Override
+            public void onAnimationEnd() {
+                setVisibility(INVISIBLE);
+                removeFromWindow();
+            }
+        });
+    }
+
+    public void removeFromWindow() {
+        if (getParent() != null && getParent() instanceof ViewGroup) {
+            ((ViewGroup) getParent()).removeView(this);
+        }
+
+        if (mBitmap != null) {
+            mBitmap.recycle();
+            mBitmap = null;
+        }
+
+        mEraser = null;
+        mAnimationFactory = null;
+        mCanvas = null;
+        mHandler = null;
+
+        getViewTreeObserver().removeGlobalOnLayoutListener(mLayoutListener);
+        mLayoutListener = null;
+
+        if (mPrefsManager != null)
+            mPrefsManager.close();
+
+        mPrefsManager = null;
+
+
     }
 
     /**
@@ -341,6 +383,58 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         applyLayoutParams();
     }
 
+    private void updateDismissButton() {
+        // hide or show button
+        if (mDismissButton != null) {
+            if (TextUtils.isEmpty(mDismissButton.getText())) {
+                mDismissButton.setVisibility(GONE);
+            } else {
+                mDismissButton.setVisibility(VISIBLE);
+            }
+        }
+    }
+
+    public static int getSoftButtonsBarSizePort(Activity activity) {
+        // getRealMetrics is only available with API 17 and +
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            DisplayMetrics metrics = new DisplayMetrics();
+            activity.getWindowManager().getDefaultDisplay().getMetrics(metrics);
+            int usableHeight = metrics.heightPixels;
+            activity.getWindowManager().getDefaultDisplay().getRealMetrics(metrics);
+            int realHeight = metrics.heightPixels;
+            if (realHeight > usableHeight)
+                return realHeight - usableHeight;
+            else
+                return 0;
+        }
+        return 0;
+    }
+
+    public static int getSoftButtonsBarHorizontalSizePort(Activity activity) {
+        // getRealMetrics is only available with API 17 and +
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+
+            DisplayMetrics metrics = new DisplayMetrics();
+            activity.getWindowManager().getDefaultDisplay().getMetrics(metrics);
+            int usableWidth = metrics.widthPixels;
+            activity.getWindowManager().getDefaultDisplay().getRealMetrics(metrics);
+            int realWidth = metrics.widthPixels;
+            if (realWidth > usableWidth)
+                return realWidth - usableWidth;
+            else
+                return 0;
+        }
+        return 0;
+    }
+
+    /**
+     * SETTERS
+     */
+
+    void setPosition(Point point) {
+        setPosition(point.x, point.y);
+    }
+
     private void applyLayoutParams() {
 
         if (mContentBox != null && mContentBox.getLayoutParams() != null) {
@@ -369,14 +463,6 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
             if (layoutParamsChanged)
                 mContentBox.setLayoutParams(contentLP);
         }
-    }
-
-    /**
-     * SETTERS
-     */
-
-    void setPosition(Point point) {
-        setPosition(point.x, point.y);
     }
 
     void setPosition(int x, int y) {
@@ -411,40 +497,8 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         }
     }
 
-    private void setContentTextColor(int textColour) {
-        if (mContentTextView != null) {
-            mContentTextView.setTextColor(textColour);
-        }
-    }
-
-    private void setDismissTextColor(int textColour) {
-        if (mDismissButton != null) {
-            mDismissButton.setTextColor(textColour);
-        }
-    }
-
-    private void setShapePadding(int padding) {
-        mShapePadding = padding;
-    }
-
     private void setDismissOnTouch(boolean dismissOnTouch) {
         mDismissOnTouch = dismissOnTouch;
-    }
-
-    private void setShouldRender(boolean shouldRender) {
-        mShouldRender = shouldRender;
-    }
-
-    private void setMaskColour(int maskColour) {
-        mMaskColour = maskColour;
-    }
-
-    private void setDelay(long delayInMillis) {
-        mDelayInMillis = delayInMillis;
-    }
-
-    private void setFadeDuration(long fadeDurationInMillis) {
-        mFadeDurationInMillis = fadeDurationInMillis;
     }
 
     private void setTargetTouchable(boolean targetTouchable){
@@ -472,10 +526,6 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         mDetachedListener = detachedListener;
     }
 
-    public void setShape(Shape mShape) {
-        this.mShape = mShape;
-    }
-
     /**
      * Set properties based on a config object
      *
@@ -492,33 +542,147 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         setRenderOverNavigationBar(config.getRenderOverNavigationBar());
     }
 
-    private void updateDismissButton() {
-        // hide or show button
-        if (mDismissButton != null) {
-            if (TextUtils.isEmpty(mDismissButton.getText())) {
-                mDismissButton.setVisibility(GONE);
-            } else {
-                mDismissButton.setVisibility(VISIBLE);
-            }
+    private void setDelay(long delayInMillis) {
+        mDelayInMillis = delayInMillis;
+    }
+
+    private void setFadeDuration(long fadeDurationInMillis) {
+        mFadeDurationInMillis = fadeDurationInMillis;
+    }
+
+    private void setContentTextColor(int textColour) {
+        if (mContentTextView != null) {
+            mContentTextView.setTextColor(textColour);
         }
+    }
+
+    private void setDismissTextColor(int textColour) {
+        if (mDismissButton != null) {
+            mDismissButton.setTextColor(textColour);
+        }
+    }
+
+    private void setMaskColour(int maskColour) {
+        mMaskColour = maskColour;
+    }
+
+    public void setShape(Shape mShape) {
+        this.mShape = mShape;
+    }
+
+    private void setShapePadding(int padding) {
+        mShapePadding = padding;
+    }
+
+    private void setRenderOverNavigationBar(boolean mRenderOverNav) {
+        this.mRenderOverNav = mRenderOverNav;
     }
 
     public boolean hasFired() {
         return mPrefsManager.hasFired();
     }
 
-    /**
-     * REDRAW LISTENER - this ensures we redraw after activity finishes laying out
-     */
-    private class UpdateOnGlobalLayout implements ViewTreeObserver.OnGlobalLayoutListener {
+    private void singleUse(String showcaseID) {
+        mSingleUse = true;
+        mPrefsManager = new PrefsManager(getContext(), showcaseID);
+    }
 
-        @Override
-        public void onGlobalLayout() {
-            setTarget(mTarget);
+    /**
+     * Reveal the showcaseview. Returns a boolean telling us whether we actually did show anything
+     *
+     * @param activity
+     * @return
+     */
+    public boolean show(final Activity activity) {
+
+        /**
+         * if we're in single use mode and have already shot our bolt then do nothing
+         */
+        if (mSingleUse) {
+            if (mPrefsManager.hasFired()) {
+                notifyOnSkipped();
+                return false;
+            } else {
+                mPrefsManager.setFired();
+            }
+        }
+
+        ((ViewGroup) activity.getWindow().getDecorView()).addView(this);
+
+        setShouldRender(true);
+
+        mHandler = new Handler();
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+
+                if (mShouldAnimate) {
+                    fadeIn();
+                } else {
+                    setVisibility(VISIBLE);
+                    notifyOnDisplayed();
+                }
+            }
+        }, mDelayInMillis);
+
+        updateDismissButton();
+
+        return true;
+    }
+
+    /**
+     * Notify when {@link #singleUse(String)} is enabled and showcase has been fired before
+     * @see #singleUse(String)
+     */
+    private void notifyOnSkipped() {
+
+		if(mListeners != null){
+			for (IShowcaseListener listener : mListeners) {
+				listener.onShowcaseSkipped(this);
+			}
+            mListeners.clear();
+            mListeners = null;
+		}
+
+        /**
+         * internal listener used by sequence for storing progress within the sequence
+         */
+        if (mDetachedListener != null) {
+            mDetachedListener.onShowcaseDetached(this, mWasDismissed);
         }
     }
 
+    private void setShouldRender(boolean shouldRender) {
+        mShouldRender = shouldRender;
+    }
 
+    public void fadeIn() {
+        setVisibility(INVISIBLE);
+
+        mAnimationFactory.fadeInView(this, mFadeDurationInMillis,
+                new IAnimationFactory.AnimationStartListener() {
+                    @Override
+                    public void onAnimationStart() {
+                        setVisibility(View.VISIBLE);
+                        notifyOnDisplayed();
+                    }
+                }
+        );
+    }
+
+    private void notifyOnDisplayed() {
+
+		if(mListeners != null){
+			for (IShowcaseListener listener : mListeners) {
+				listener.onShowcaseDisplayed(this);
+			}
+		}
+    }
+
+    public void resetSingleUse() {
+        if (mSingleUse && mPrefsManager != null) mPrefsManager.resetShowcase();
+    }
+    
     /**
      * BUILDER CLASS
      * Gives us a builder utility class with a fluent API for eaily configuring showcase views
@@ -527,13 +691,10 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         private static final int CIRCLE_SHAPE = 0;
         private static final int RECTANGLE_SHAPE = 1;
         private static final int NO_SHAPE = 2;
-
+        final MaterialShowcaseView showcaseView;
+        private final Activity activity;
         private boolean fullWidth = false;
         private int shapeType = CIRCLE_SHAPE;
-
-        final MaterialShowcaseView showcaseView;
-
-        private final Activity activity;
 
         public Builder(Activity activity) {
             this.activity = activity;
@@ -692,6 +853,11 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
             return this;
         }
 
+        public MaterialShowcaseView show() {
+            build().show(activity);
+            return showcaseView;
+        }
+
         public MaterialShowcaseView build() {
             if (showcaseView.mShape == null) {
                 switch (shapeType) {
@@ -717,185 +883,16 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
             return showcaseView;
         }
 
-        public MaterialShowcaseView show() {
-            build().show(activity);
-            return showcaseView;
-        }
-
-    }
-
-    private void singleUse(String showcaseID) {
-        mSingleUse = true;
-        mPrefsManager = new PrefsManager(getContext(), showcaseID);
-    }
-
-    public void removeFromWindow() {
-        if (getParent() != null && getParent() instanceof ViewGroup) {
-            ((ViewGroup) getParent()).removeView(this);
-        }
-
-        if (mBitmap != null) {
-            mBitmap.recycle();
-            mBitmap = null;
-        }
-
-        mEraser = null;
-        mAnimationFactory = null;
-        mCanvas = null;
-        mHandler = null;
-
-        getViewTreeObserver().removeGlobalOnLayoutListener(mLayoutListener);
-        mLayoutListener = null;
-
-        if (mPrefsManager != null)
-            mPrefsManager.close();
-
-        mPrefsManager = null;
-
-
-    }
-
-
-    /**
-     * Reveal the showcaseview. Returns a boolean telling us whether we actually did show anything
-     *
-     * @param activity
-     * @return
-     */
-    public boolean show(final Activity activity) {
-
-        /**
-         * if we're in single use mode and have already shot our bolt then do nothing
-         */
-        if (mSingleUse) {
-            if (mPrefsManager.hasFired()) {
-                notifyOnSkipped();
-                return false;
-            } else {
-                mPrefsManager.setFired();
-            }
-        }
-
-        ((ViewGroup) activity.getWindow().getDecorView()).addView(this);
-
-        setShouldRender(true);
-
-        mHandler = new Handler();
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-
-                if (mShouldAnimate) {
-                    fadeIn();
-                } else {
-                    setVisibility(VISIBLE);
-                    notifyOnDisplayed();
-                }
-            }
-        }, mDelayInMillis);
-
-        updateDismissButton();
-
-        return true;
-    }
-
-
-    public void hide() {
-
-        /**
-         * This flag is used to indicate to onDetachedFromWindow that the showcase view was dismissed purposefully (by the user or programmatically)
-         */
-        mWasDismissed = true;
-
-        if (mShouldAnimate) {
-            fadeOut();
-        } else {
-            removeFromWindow();
-        }
-    }
-
-    public void fadeIn() {
-        setVisibility(INVISIBLE);
-
-        mAnimationFactory.fadeInView(this, mFadeDurationInMillis,
-                new IAnimationFactory.AnimationStartListener() {
-                    @Override
-                    public void onAnimationStart() {
-                        setVisibility(View.VISIBLE);
-                        notifyOnDisplayed();
-                    }
-                }
-        );
-    }
-
-    public void fadeOut() {
-
-        mAnimationFactory.fadeOutView(this, mFadeDurationInMillis, new IAnimationFactory.AnimationEndListener() {
-            @Override
-            public void onAnimationEnd() {
-                setVisibility(INVISIBLE);
-                removeFromWindow();
-            }
-        });
-    }
-
-    public void resetSingleUse() {
-        if (mSingleUse && mPrefsManager != null) mPrefsManager.resetShowcase();
     }
 
     /**
-     * Static helper method for resetting single use flag
-     *
-     * @param context
-     * @param showcaseID
+     * REDRAW LISTENER - this ensures we redraw after activity finishes laying out
      */
-    public static void resetSingleUse(Context context, String showcaseID) {
-        PrefsManager.resetShowcase(context, showcaseID);
-    }
+    private class UpdateOnGlobalLayout implements ViewTreeObserver.OnGlobalLayoutListener {
 
-    /**
-     * Static helper method for resetting all single use flags
-     *
-     * @param context
-     */
-    public static void resetAll(Context context) {
-        PrefsManager.resetAll(context);
-    }
-
-    public static int getSoftButtonsBarSizePort(Activity activity) {
-        // getRealMetrics is only available with API 17 and +
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            DisplayMetrics metrics = new DisplayMetrics();
-            activity.getWindowManager().getDefaultDisplay().getMetrics(metrics);
-            int usableHeight = metrics.heightPixels;
-            activity.getWindowManager().getDefaultDisplay().getRealMetrics(metrics);
-            int realHeight = metrics.heightPixels;
-            if (realHeight > usableHeight)
-                return realHeight - usableHeight;
-            else
-                return 0;
+        @Override
+        public void onGlobalLayout() {
+            setTarget(mTarget);
         }
-        return 0;
-    }
-    
-    public static int getSoftButtonsBarHorizontalSizePort(Activity activity) {
-        // getRealMetrics is only available with API 17 and +
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-
-            DisplayMetrics metrics = new DisplayMetrics();
-            activity.getWindowManager().getDefaultDisplay().getMetrics(metrics);
-            int usableWidth = metrics.widthPixels;
-            activity.getWindowManager().getDefaultDisplay().getRealMetrics(metrics);
-            int realWidth = metrics.widthPixels;
-            if (realWidth > usableWidth)
-                return realWidth - usableWidth;
-            else
-                return 0;
-        }
-        return 0;
-    }
-
-    private void setRenderOverNavigationBar(boolean mRenderOverNav) {
-        this.mRenderOverNav = mRenderOverNav;
     }
 }

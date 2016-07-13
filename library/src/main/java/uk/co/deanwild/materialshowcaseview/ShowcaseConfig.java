@@ -12,7 +12,7 @@ public class ShowcaseConfig {
     public static final long DEFAULT_FADE_TIME = 300;
     public static final long DEFAULT_DELAY = 0;
     public static final Shape DEFAULT_SHAPE = new CircleShape();
-    public static final int DEFAULT_SHAPE_PADDING = 10;
+    public static int DEFAULT_SHAPE_PADDING = -1;
 
     private long mDelay = DEFAULT_DELAY;
     private int mMaskColour;
@@ -77,12 +77,12 @@ public class ShowcaseConfig {
         this.mShape = shape;
     }
 
-    public void setShapePadding(int padding) {
-        this.mShapePadding = padding;
-    }
-
     public int getShapePadding() {
         return mShapePadding;
+    }
+
+    public void setShapePadding(int padding) {
+        this.mShapePadding = padding;
     }
 
     public boolean getRenderOverNavigationBar() {
