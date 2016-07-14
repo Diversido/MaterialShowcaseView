@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<color name="material_showcase_background_color">#00B0FF</color>
+	<color name="text_color_primary">#FFFFFFFF</color>
+	<color name="text_color_secondary">#82FFFFFF</color>
+</resources>
