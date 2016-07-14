@@ -21,7 +21,8 @@ public class ShowcaseConfig {
     private long mFadeDuration = DEFAULT_FADE_TIME;
     private Shape mShape = DEFAULT_SHAPE;
     private int mShapePadding = DEFAULT_SHAPE_PADDING;
-    private boolean renderOverNav = false;
+    private boolean mRenderOverNav = false;
+    private boolean mBackgroundFullscreen = false;
 
     public ShowcaseConfig() {
         mMaskColour = Color.parseColor(ShowcaseConfig.DEFAULT_MASK_COLOUR);
@@ -85,11 +86,24 @@ public class ShowcaseConfig {
         this.mShapePadding = padding;
     }
 
+    public boolean isBackgroundFullscreen() {
+        return mBackgroundFullscreen;
+    }
+
+    /**
+     * Set the background to render the fullscreen.
+     * @param fullscreen If set to true the background will render the entire screen. If set to
+     * false it will instead render a circle around the target and content like material's design
+     */
+    public void setBackgroundFullscreen(boolean fullscreen) {
+            mBackgroundFullscreen = fullscreen;
+        }
+
     public boolean getRenderOverNavigationBar() {
-        return renderOverNav;
+        return mRenderOverNav;
     }
 
     public void setRenderOverNavigationBar(boolean renderOverNav) {
-        this.renderOverNav = renderOverNav;
+        this.mRenderOverNav = renderOverNav;
     }
 }

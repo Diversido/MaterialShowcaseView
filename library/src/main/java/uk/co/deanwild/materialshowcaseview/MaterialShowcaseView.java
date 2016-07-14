@@ -41,6 +41,7 @@ import uk.co.deanwild.materialshowcaseview.target.ViewTarget;
  */
 public class MaterialShowcaseView extends FrameLayout implements View.OnTouchListener, View.OnClickListener {
 
+    private static int mTargetNearBorderDistance;
     List<IShowcaseListener> mListeners; // external listeners who want to observe when we show and dismiss
     private int mOldHeight;
     private int mOldWidth;
@@ -60,17 +61,21 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
     private int mGravity;
     private int mContentBottomMargin;
     private int mContentTopMargin;
+    private Point mTargetLastPoint = new Point();
+    private Point mContentLastPoint = new Point();
+    private CircleShape mBackgroundShape = new CircleShape();
+	private Point mBackgroundCenter = new Point();
+    private boolean mBackgroundFullscreen = false;
     private boolean mDismissOnTouch = false;
     private boolean mShouldRender = false; // flag to decide when we should actually render
     private boolean mRenderOverNav = false;
-    private int mMaskColour;
+    private int mMaskColor;
+	private Paint mMaskColorPaint;
     private AnimationFactory mAnimationFactory;
     private boolean mShouldAnimate = true;
     private long mFadeDurationInMillis = ShowcaseConfig.DEFAULT_FADE_TIME;
     private Handler mHandler;
     private long mDelayInMillis = ShowcaseConfig.DEFAULT_DELAY;
-    private int mBottomMargin = 0;
-    private int mRightMargin = 0;
     private boolean mSingleUse = false; // should display only once
     private PrefsManager mPrefsManager; // used to store state doe single use mode
     private UpdateOnGlobalLayout mLayoutListener;
@@ -86,10 +91,11 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
     private void init(Context context) {
         setWillNotDraw(false);
 
-        // Set default padding
+        // Set defaults
         if (ShowcaseConfig.DEFAULT_SHAPE_PADDING == -1) {
             ShowcaseConfig.DEFAULT_SHAPE_PADDING = context.getResources().getDimensionPixelSize(R.dimen.material_showcase_shape_padding);
             mShapePadding = ShowcaseConfig.DEFAULT_SHAPE_PADDING;
+            mTargetNearBorderDistance = context.getResources().getDimensionPixelSize(R.dimen.material_showcase_target_near_border);
         }
 
         // create our animation factory
@@ -104,7 +110,7 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         // consume touch events
         setOnTouchListener(this);
 
-        mMaskColour = Color.parseColor(ShowcaseConfig.DEFAULT_MASK_COLOUR);
+        mMaskColor = Color.parseColor(ShowcaseConfig.DEFAULT_MASK_COLOUR);
         setVisibility(INVISIBLE);
 
 
@@ -183,6 +189,26 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
             mCanvas = new Canvas(mBitmap);
         }
 
+		// Update background radius
+        if (!mBackgroundFullscreen) {
+            if (mContentLastPoint.x != (int)mContentBox.getX() || mContentLastPoint.y != (int)mContentBox.getY()) {
+                if (mTarget != null) {
+					if (useTargetAsBackgroundCenter()) {
+						if (mTargetLastPoint.x != mTarget.getPoint().x || mTargetLastPoint.y != mTarget.getPoint().y) {
+							mBackgroundCenter.set(mTarget.getPoint().x, mTarget.getPoint().y);
+							updateBackgroundRadius();
+						}
+					} else {
+                        setBackgroundCenterToContentBox();
+						updateBackgroundRadius();
+					}
+                } else {
+                    setBackgroundCenterToContentBox();
+                    updateBackgroundRadius();
+                }
+            }
+        }
+
         // save our 'old' dimensions
         mOldWidth = width;
         mOldHeight = height;
@@ -191,7 +217,15 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         mCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
         // draw solid background
-        mCanvas.drawColor(mMaskColour);
+		if (!mBackgroundFullscreen && mBackgroundShape.getRadius() > 0) {
+			if (mMaskColorPaint == null) {
+				mMaskColorPaint = new Paint();
+				mMaskColorPaint.setColor(mMaskColor);
+			}
+			mBackgroundShape.draw(mCanvas, mMaskColorPaint, mBackgroundCenter.x, mBackgroundCenter.y, 0);
+		} else {
+			mCanvas.drawColor(mMaskColor);
+		}
 
         // Prepare eraser Paint if needed
         if (mEraser == null) {
@@ -206,6 +240,67 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
 
         // Draw the bitmap on our views  canvas.
         canvas.drawBitmap(mBitmap, 0, 0, null);
+    }
+
+    /**
+     * Check if we should use target as background center. I.e. checks if the target
+     * is close to a border or not.
+     * @return true if we should use target as background center, false if we should
+     * use content box as center
+     */
+    private boolean useTargetAsBackgroundCenter() {
+        if (mTarget != null) {
+            int width = getMeasuredWidth();
+            int height = getMeasuredHeight();
+
+            return mTargetNearBorderDistance >= mTarget.getPoint().x ||
+                    mTarget.getPoint().x >= width - mTargetNearBorderDistance ||
+                    mTargetNearBorderDistance >= mTarget.getPoint().y ||
+                    mTarget.getPoint().y >= height - mTargetNearBorderDistance;
+        }
+
+        return false;
+    }
+
+    /**
+     * Calculate max radius from target to content box
+     */
+    private void updateBackgroundRadius() {
+        mBackgroundShape.setRadius(0);
+
+        // Get content location without padding
+        int left = mContentBox.getLeft();
+        int right = mContentBox.getRight();
+        int top = mContentBox.getTop();
+        int bottom = mContentBox.getBottom();
+
+        Point[] contentPoints = new Point[4];
+        contentPoints[0] = new Point(left, top);
+        contentPoints[1] = new Point(left, bottom);
+        contentPoints[2] = new Point(right, top);
+        contentPoints[3] = new Point(right, bottom);
+
+        Point diffPoint = new Point();
+        int maxDistance = 0;
+        for (int i = 0; i < contentPoints.length; i++) {
+            diffPoint.set(contentPoints[i].x - mBackgroundCenter.x, contentPoints[i].y - mBackgroundCenter.y);
+            int distance = (int) Math.sqrt(diffPoint.x * diffPoint.x + diffPoint.y * diffPoint.y);
+
+            if (distance > maxDistance) {
+                maxDistance = distance;
+            }
+        }
+
+        mBackgroundShape.setRadius(maxDistance);
+    }
+
+    /**
+     * Set background center to content center
+     */
+    private void setBackgroundCenterToContentBox() {
+        int x = (mContentBox.getRight() + mContentBox.getLeft()) / 2;
+        int y = (mContentBox.getBottom() + mContentBox.getTop()) / 2;
+        mBackgroundCenter.set(x, y);
     }
 
     @Override
@@ -338,16 +433,16 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
              * If we're on lollipop then make sure we don't draw over the nav bar
              */
             if (!mRenderOverNav && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                mBottomMargin = getSoftButtonsBarSizePort((Activity) getContext());
-                mRightMargin = getSoftButtonsBarHorizontalSizePort((Activity) getContext());
+                int bottomMargin = getSoftButtonsBarSizePort((Activity) getContext());
+                int rightMargin = getSoftButtonsBarHorizontalSizePort((Activity) getContext());
 
                 FrameLayout.LayoutParams contentLP = (LayoutParams) getLayoutParams();
 
                 if (contentLP != null) {
-                    if (contentLP.bottomMargin != mBottomMargin)
-                        contentLP.bottomMargin = mBottomMargin;
-                    if (contentLP.rightMargin != mRightMargin)
-                        contentLP.rightMargin = mRightMargin;
+                    if (contentLP.bottomMargin != bottomMargin)
+                        contentLP.bottomMargin = bottomMargin;
+                    if (contentLP.rightMargin != rightMargin)
+                        contentLP.rightMargin = rightMargin;
                 }
             }
 
@@ -536,7 +631,7 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         setFadeDuration(config.getFadeDuration());
         setContentTextColor(config.getContentTextColor());
         setDismissTextColor(config.getDismissTextColor());
-        setMaskColour(config.getMaskColor());
+        setMaskColor(config.getMaskColor());
         setShape(config.getShape());
         setShapePadding(config.getShapePadding());
         setRenderOverNavigationBar(config.getRenderOverNavigationBar());
@@ -562,8 +657,8 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         }
     }
 
-    private void setMaskColour(int maskColour) {
-        mMaskColour = maskColour;
+    private void setMaskColor(int maskColor) {
+        mMaskColor = maskColor;
     }
 
     public void setShape(Shape mShape) {
@@ -679,10 +774,23 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
 		}
     }
 
+    public boolean isBackgroundFullscreen() {
+        return mBackgroundFullscreen;
+    }
+
+    /**
+     * Set the background to render the fullscreen.
+     * @param fullscreen If set to true the background will render the entire screen. If set to
+     * false it will instead render a circle around the target and content like material's design
+     */
+    public void setBackgroundFullscreen(boolean fullscreen) {
+        mBackgroundFullscreen = fullscreen;
+    }
+
     public void resetSingleUse() {
         if (mSingleUse && mPrefsManager != null) mPrefsManager.resetShowcase();
     }
-    
+
     /**
      * BUILDER CLASS
      * Gives us a builder utility class with a fluent API for eaily configuring showcase views
@@ -778,7 +886,7 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         }
 
         public Builder setMaskColour(int maskColour) {
-            showcaseView.setMaskColour(maskColour);
+            showcaseView.setMaskColor(maskColour);
             return this;
         }
 
@@ -805,6 +913,15 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         public Builder setFadeDuration(int fadeDurationInMillis) {
             showcaseView.setFadeDuration(fadeDurationInMillis);
             return this;
+        }
+
+        /**
+         * Set the background to render the fullscreen.
+         * @param fullscreen If set to true the background will render the entire screen. If set to
+         * false it will instead render a circle around the target and content like material's design
+         */
+        public void setBackgroundFullscreen(boolean fullscreen) {
+            showcaseView.setBackgroundFullscreen(fullscreen);
         }
 
         public Builder setListener(IShowcaseListener listener) {
