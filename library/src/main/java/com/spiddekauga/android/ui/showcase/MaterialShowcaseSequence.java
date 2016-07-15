@@ -6,7 +6,7 @@ import android.view.View;
 import java.util.LinkedList;
 import java.util.Queue;
 
-public class MaterialShowcaseSequence implements IDetachedListener {
+public class MaterialShowcaseSequence implements DetachedListener {
 
 PrefsGateway mPrefsGateway;
 Queue<MaterialShowcaseView> mShowcaseQueue;
@@ -14,15 +14,11 @@ Activity mActivity;
 private boolean mSingleUse = false;
 private ShowcaseConfig mConfig;
 private int mSequencePosition = 0;
-
-private OnSequenceItemShownListener mOnItemShownListener = null;
-private OnSequenceItemDismissedListener mOnItemDismissedListener = null;
-
 private MaterialShowcaseView mCurrentShownShowcase;
 
-public MaterialShowcaseSequence(Activity activity, String sequenceID) {
+public MaterialShowcaseSequence(Activity activity, String sequenceId) {
 	this(activity);
-	this.singleUse(sequenceID);
+	singleUse(sequenceId);
 }
 
 public MaterialShowcaseSequence(Activity activity) {
@@ -37,18 +33,15 @@ public MaterialShowcaseSequence singleUse(String sequenceID) {
 }
 
 public MaterialShowcaseSequence addSequenceItem(int contentResId, int dismissTextResId) {
-	addSequenceItem(mActivity.getString(contentResId), mActivity.getString(dismissTextResId));
-	return this;
+	return addSequenceItem(mActivity.getString(contentResId), mActivity.getString(dismissTextResId));
 }
 
 public MaterialShowcaseSequence addSequenceItem(String content, String dismissText) {
-	addSequenceItem(null, content, dismissText);
-	return this;
+	return addSequenceItem(null, content, dismissText);
 }
 
 public MaterialShowcaseSequence addSequenceItem(View targetView, String content, String dismissText) {
-	addSequenceItem(targetView, "", content, dismissText);
-	return this;
+	return addSequenceItem(targetView, "", content, dismissText);
 }
 
 public MaterialShowcaseSequence addSequenceItem(View targetView, String title, String content, String dismissText) {
@@ -62,8 +55,10 @@ public MaterialShowcaseSequence addSequenceItem(View targetView, String title, S
 		builder.setTarget(targetView);
 	}
 
-	MaterialShowcaseView sequenceItem = builder.build();
+	return addSequenceItem(builder.build());
+}
 
+public MaterialShowcaseSequence addSequenceItem(MaterialShowcaseView sequenceItem) {
 	if (mConfig != null) {
 		sequenceItem.setConfig(mConfig);
 	}
@@ -83,32 +78,15 @@ public MaterialShowcaseSequence addSequenceItem(int targetViewId, int titleResId
 	return this;
 }
 
-public MaterialShowcaseSequence addSequenceItem(MaterialShowcaseView sequenceItem) {
-	mShowcaseQueue.add(sequenceItem);
-	return this;
-}
-
-public void setOnItemShownListener(OnSequenceItemShownListener listener) {
-	this.mOnItemShownListener = listener;
-}
-
-public void setOnItemDismissedListener(OnSequenceItemDismissedListener listener) {
-	this.mOnItemDismissedListener = listener;
-}
-
-void start() {
-	/**
-	 * Check if we've already shot our bolt and bail out if so         *
-	 */
+public void start() {
+	// Check if we've already shot our bolt and bail out if so
 	if (mSingleUse) {
 		if (hasFired()) {
 			return;
 		}
 
-		/**
-		 * See if we have started this sequence before, if so then skip to the point we reached before
-		 * instead of showing the user everything from the start
-		 */
+		// See if we have started this sequence before, if so then skip to the point we reached before
+		// instead of showing the user everything from the start
 		mSequencePosition = mPrefsGateway.getSequenceStatus();
 
 		if (mSequencePosition > 0) {
@@ -134,13 +112,8 @@ private void showNextItem() {
 		mCurrentShownShowcase = mShowcaseQueue.remove();
 		mCurrentShownShowcase.setDetachedListener(this);
 		mCurrentShownShowcase.show(mActivity);
-		if (mOnItemShownListener != null) {
-			mOnItemShownListener.onShow(mCurrentShownShowcase, mSequencePosition);
-		}
 	} else {
-		/**
-		 * We've reached the end of the sequence, save the fired state
-		 */
+		// We've reached the end of the sequence, save the fired state
 		if (mSingleUse) {
 			mPrefsGateway.setFired();
 		}
@@ -175,11 +148,6 @@ public void onShowcaseDetached(MaterialShowcaseView showcaseView, boolean wasDis
 
 	// We're only interested if the showcase was purposefully dismissed
 	if (wasDismissed) {
-
-		if (mOnItemDismissedListener != null) {
-			mOnItemDismissedListener.onDismiss(showcaseView, mSequencePosition);
-		}
-
 		// If so, update the PrefsGateway so we can potentially resume this sequence in the future
 		if (mPrefsGateway != null) {
 			mSequencePosition++;
@@ -191,15 +159,6 @@ public void onShowcaseDetached(MaterialShowcaseView showcaseView, boolean wasDis
 }
 
 public void setConfig(ShowcaseConfig config) {
-	this.mConfig = config;
+	mConfig = config;
 }
-
-public interface OnSequenceItemShownListener {
-	void onShow(MaterialShowcaseView itemView, int position);
-}
-
-public interface OnSequenceItemDismissedListener {
-	void onDismiss(MaterialShowcaseView itemView, int position);
-}
-
 }

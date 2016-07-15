@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="uk.co.deanwild.materialshowcaseviewsample" >
+<manifest package="com.spiddekauga.android.ui.materialshowcaseviewsample"
+          xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
         android:allowBackup="true"
@@ -21,8 +21,8 @@
             android:label="@string/title_activity_simple_single_example" >
         </activity>
         <activity
-            android:name=".CustomExample"
-            android:label="@string/title_activity_custom_example" >
+            android:name=".FullscreenExample"
+            android:label="@string/title_activity_fullscreen_example" >
         </activity>
         <activity
             android:name=".SequenceExample"

@@ -41,7 +41,7 @@ public void draw(Canvas canvas, Paint paint) {
 	if (mRadius > 0) {
 		Point point = getPoint();
 		if (point != null) {
-			canvas.drawCircle(mPoint.x, mPoint.y, mRadius, paint);
+			canvas.drawCircle(point.x, point.y, mRadius, paint);
 		}
 	}
 }

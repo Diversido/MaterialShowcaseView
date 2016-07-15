@@ -5,16 +5,16 @@ import android.content.SharedPreferences;
 
 class PrefsGateway {
 
+static final int SEQUENCE_NEVER_STARTED = 0;
+static final int SEQUENCE_FINISHED = -1;
 private static final String PREFS_NAME = "material_showcaseview_prefs";
 private static final String STATUS = "status_";
-public static int SEQUENCE_NEVER_STARTED = 0;
-public static int SEQUENCE_FINISHED = -1;
-private String showcaseID = null;
-private Context context;
+private String mShowcaseId;
+private Context mContext;
 
-public PrefsGateway(Context context, String showcaseID) {
-	this.context = context;
-	this.showcaseID = showcaseID;
+public PrefsGateway(Context context, String showcaseId) {
+	mContext = context;
+	mShowcaseId = showcaseId;
 }
 
 public static void resetAll(Context context) {
@@ -34,15 +34,15 @@ boolean hasFired() {
  * Used for sequence showcases
  */
 int getSequenceStatus() {
-	return context
+	return mContext
 			.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-			.getInt(STATUS + showcaseID, SEQUENCE_NEVER_STARTED);
+			.getInt(STATUS + mShowcaseId, SEQUENCE_NEVER_STARTED);
 
 }
 
 void setSequenceStatus(int status) {
-	SharedPreferences internal = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-	internal.edit().putInt(STATUS + showcaseID, status).apply();
+	SharedPreferences internal = mContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+	internal.edit().putInt(STATUS + mShowcaseId, status).apply();
 }
 
 void setFired() {
@@ -50,7 +50,7 @@ void setFired() {
 }
 
 public void resetShowcase() {
-	resetShowcase(context, showcaseID);
+	resetShowcase(mContext, mShowcaseId);
 }
 
 static void resetShowcase(Context context, String showcaseID) {
@@ -59,6 +59,6 @@ static void resetShowcase(Context context, String showcaseID) {
 }
 
 public void close() {
-	context = null;
+	mContext = null;
 }
 }

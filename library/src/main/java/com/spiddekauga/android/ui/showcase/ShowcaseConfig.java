@@ -1,57 +1,49 @@
 package com.spiddekauga.android.ui.showcase;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
-import android.graphics.Color;
 import android.os.Build;
 import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ShowcaseConfig {
-public static final long DEFAULT_DELAY = 0;
 static final long ANIMATION_IN_TIME = 300;
 static final long ANIMATION_HIDE_TIME = 300;
 static final long ANIMATION_PRESSED_TIME = 300;
-static int mMaskColorDefault = -1;
+static int mBackgroundColorDefault = -1;
+static int mDismissBackgroundColorDefault = -1;
 static int mTargetRadiusDefault = -1;
 static int mTargetRadiusDefaultSq = -1;
 static int mTargetNearBorderDistance = -1;
 private static boolean mInitialized = false;
-private long mDelay = DEFAULT_DELAY;
-private int mMaskColor;
+List<ShowcaseListener> mListeners = new ArrayList<>();
+private long mDelay = -1;
+private int mDismissBackgroundColor = -1;
+private int mBackgroundColor = -1;
 private int mTitleTextColor = -1;
 private int mContentTextColor = -1;
 private int mDismissTextColor = -1;
-private boolean mRenderOverNav = false;
-private boolean mBackgroundFullscreen = false;
+private Boolean mRenderOverNav = null;
 
 public ShowcaseConfig(Context context) {
 	init(context);
-	mMaskColor = mMaskColorDefault;
 }
 
 static void init(Context context) {
 	if (!mInitialized) {
-		setDefaultMaskColor(context);
-
 		Resources resources = context.getResources();
+		mBackgroundColorDefault = getColor(resources, R.color.material_showcase_background);
+		mDismissBackgroundColorDefault = getColor(resources, R.color.material_showcase_dismiss_background);
 		mTargetRadiusDefault = resources.getDimensionPixelSize(R.dimen.material_showcase_target_radius);
 		mTargetRadiusDefaultSq = mTargetRadiusDefault * mTargetRadiusDefault;
 		mTargetNearBorderDistance = resources.getDimensionPixelSize(R.dimen.material_showcase_target_near_border);
 		mInitialized = true;
 	}
-}
-
-private static void setDefaultMaskColor(Context context) {
-	int color = getColor(context.getResources(), R.color.material_showcase_background_color);
-
-	// Set correct alpha
-	int r = Color.red(color);
-	int g = Color.green(color);
-	int b = Color.blue(color);
-	int a = 0xF5;
-	mMaskColorDefault = Color.argb(a, r, g, b);
 }
 
 /**
@@ -73,65 +65,139 @@ private static int getColor(Resources resources, @ColorRes int id) throws Resour
 	}
 }
 
+public int getDismissBackgroundColor() {
+	return mDismissBackgroundColor;
+}
+
+/**
+ * Set the background color of the dismiss button. By default this is {@link
+ * com.spiddekauga.android.ui.showcase.R.color#material_showcase_dismiss_background}
+ * @param backgroundColor background color of the dismiss button
+ */
+public void setDismissBackgroundColor(int backgroundColor) {
+	mDismissBackgroundColor = backgroundColor;
+}
+
+public boolean isDismissBackgroundColorSet() {
+	return mDismissBackgroundColor != -1;
+}
+
 public long getDelay() {
 	return mDelay;
 }
 
-public void setDelay(long delay) {
-	this.mDelay = delay;
+/**
+ * Delay the showcase for X milliseconds after calling {@link MaterialShowcaseView#show(Activity)}
+ * @param delayInMillis milliseconds to delay the showcase for after calling {@link
+ * MaterialShowcaseView#show(Activity)}
+ */
+public void setDelay(long delayInMillis) {
+	mDelay = delayInMillis;
 }
 
-public int getMaskColor() {
-	return mMaskColor;
+public boolean isDelaySet() {
+	return mDelay >= 0;
 }
 
-public void setMaskColor(int maskColor) {
-	mMaskColor = maskColor;
+public int getBackgroundColor() {
+	return mBackgroundColor;
+}
+
+/**
+ * Set the background color of the circle or fullscreen area.
+ * @param backgroundColor the background color to use. Note that according to Material's design
+ * document the opacity of the color should be 96%, 246, or F5.
+ */
+public void setBackgroundColor(int backgroundColor) {
+	mBackgroundColor = backgroundColor;
+}
+
+public boolean isBackgroundColorSet() {
+	return mBackgroundColor != -1;
 }
 
 public int getTitleTextColor() {
 	return mTitleTextColor;
 }
 
-public void setTitleTextColor(int titleTextColor) {
-	mTitleTextColor = titleTextColor;
+/**
+ * Set the color of the title text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#text_color_primary}
+ * @param textColor color of the title text
+ */
+public void setTitleTextColor(int textColor) {
+	mTitleTextColor = textColor;
+}
+
+public boolean isTitleTextColorSet() {
+	return mTitleTextColor != -1;
 }
 
 public int getContentTextColor() {
 	return mContentTextColor;
 }
 
-public void setContentTextColor(int mContentTextColor) {
-	this.mContentTextColor = mContentTextColor;
+/**
+ * Set the color of the content description. By default this is {@link
+ * com.spiddekauga.android.ui.showcase.R.color#text_color_secondary}
+ * @param textColor color of the content description text
+ */
+public void setContentTextColor(int textColor) {
+	mContentTextColor = textColor;
+}
+
+public boolean isContentTextColorSet() {
+	return mContentTextColor != -1;
 }
 
 public int getDismissTextColor() {
 	return mDismissTextColor;
 }
 
-public void setDismissTextColor(int dismissTextColor) {
-	this.mDismissTextColor = dismissTextColor;
-}
-
-public boolean isBackgroundFullscreen() {
-	return mBackgroundFullscreen;
-}
-
 /**
- * Set the background to render on the entire screen and not only a circle. Automatically does this
- * if no target has been set.
- * @param fullscreen If set to true the background will render the entire screen. If set to false it
- * will instead render a circle around the target and content like material's design.
+ * Set the color of the dismiss text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#text_color_secondary}
+ * @param textColor color of the dismiss button text
  */
-public void setBackgroundFullscreen(boolean fullscreen) {
-	mBackgroundFullscreen = fullscreen;
+public void setDismissTextColor(int textColor) {
+	mDismissTextColor = textColor;
 }
 
-public boolean getRenderOverNavigationBar() {
+public boolean isDismissTextColorSet() {
+	return mDismissTextColor != -1;
+}
+
+public Boolean getRenderOverNavigationBar() {
 	return mRenderOverNav;
 }
 
+/**
+ * Render above the navigation bar. Only has some effect in Lollipop or above.
+ * @param renderOverNav true to render above the navigation bar
+ */
 public void setRenderOverNavigationBar(boolean renderOverNav) {
-	this.mRenderOverNav = renderOverNav;
+	mRenderOverNav = renderOverNav;
+}
+
+public boolean isRenderOverNavigationBarSet() {
+	return mRenderOverNav != null;
+}
+
+/**
+ * Add a showcase listener to listen to dismiss, display, and skipped events.
+ * @param listener showcase listener
+ */
+public void addListener(ShowcaseListener listener) {
+	mListeners.add(listener);
+}
+
+/**
+ * Remove a showcase listener
+ * @param listener showcase listener to remove
+ */
+public void removeListener(MaterialShowcaseSequence listener) {
+	mListeners.remove(listener);
+}
+
+public List<ShowcaseListener> getListeners() {
+	return mListeners;
 }
 }

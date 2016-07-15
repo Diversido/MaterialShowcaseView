@@ -1,6 +1,6 @@
 package com.spiddekauga.android.ui.showcase;
 
 
-public interface IDetachedListener {
+interface DetachedListener {
 void onShowcaseDetached(MaterialShowcaseView showcaseView, boolean wasDismissed);
 }

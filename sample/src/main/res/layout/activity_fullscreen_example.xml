@@ -6,27 +6,7 @@
 				android:paddingLeft="@dimen/activity_horizontal_margin"
 				android:paddingRight="@dimen/activity_horizontal_margin"
 				android:paddingTop="@dimen/activity_vertical_margin"
-				tools:context=".SequenceExample">
-
-	<android.support.design.widget.FloatingActionButton
-		android:id="@+id/top_button"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_alignParentEnd="true"
-		android:layout_alignParentRight="true"
-		android:layout_marginEnd="60dp"
-		android:layout_marginRight="60dp"
-		android:layout_marginTop="60dp"
-		android:src="@drawable/add_24dp"/>
-
-	<android.support.design.widget.FloatingActionButton
-		android:id="@+id/bottom_right_button"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_alignParentBottom="true"
-		android:layout_alignParentEnd="true"
-		android:layout_alignParentRight="true"
-		android:src="@drawable/add_24dp"/>
+				tools:context=".FullscreenExample">
 
 	<android.support.v7.widget.AppCompatButton
 		android:id="@+id/show_button"
@@ -35,6 +15,7 @@
 		android:layout_above="@+id/reset_button"
 		android:layout_centerHorizontal="true"
 		android:text="Reveal Showcase"/>
+
 
 	<android.support.v7.widget.AppCompatButton
 		android:id="@+id/reset_button"

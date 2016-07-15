@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<color name="material_showcase_background_color">#00B0FF</color>
+	<!-- NOTE! Showcase background opacity should be 96% or F5 — from Material design document -->
+	<color name="material_showcase_background">#F500B0FF</color>
+	<color name="material_showcase_dismiss_background">#FF4081</color>
 	<color name="text_color_primary">#FFFFFFFF</color>
 	<color name="text_color_secondary">#82FFFFFF</color>
 </resources>
