@@ -83,7 +83,13 @@ private void presentShowcaseSequence() {
 					.build()
 	);
 
-	sequence.start();
+	sequence.show();
+
+	// 4
+	new MaterialShowcaseView.Builder(this)
+			.setTitleText("Automatically queued")
+			.setContentText("Calling show() on while a sequence or showcase is active will queue the showcase. Therefor it is not entirely necessary to use a sequence")
+			.show();
 }
 
 }

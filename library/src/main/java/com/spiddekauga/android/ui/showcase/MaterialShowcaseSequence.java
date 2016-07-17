@@ -6,8 +6,8 @@ import android.view.View;
 import java.util.LinkedList;
 import java.util.Queue;
 
-public class MaterialShowcaseSequence implements DetachedListener {
-
+public class MaterialShowcaseSequence implements DetachedListener, MaterialShowcaseDisplayer.ShowcaseContainer {
+private static final MaterialShowcaseDisplayer mShowcaseDisplayer = MaterialShowcaseDisplayer.getInstance();
 PrefsGateway mPrefsGateway;
 Queue<MaterialShowcaseView> mShowcaseQueue;
 Activity mActivity;
@@ -78,7 +78,10 @@ public MaterialShowcaseSequence addSequenceItem(int targetViewId, int titleResId
 	return this;
 }
 
-public void start() {
+/**
+ * Show the entire sequence
+ */
+public void show() {
 	// Check if we've already shot our bolt and bail out if so
 	if (mSingleUse) {
 		if (hasFired()) {
@@ -86,7 +89,7 @@ public void start() {
 		}
 
 		// See if we have started this sequence before, if so then skip to the point we reached before
-		// instead of showing the user everything from the start
+		// instead of showing the user everything from the showNow
 		mSequencePosition = mPrefsGateway.getSequenceStatus();
 
 		if (mSequencePosition > 0) {
@@ -96,28 +99,14 @@ public void start() {
 		}
 	}
 
-	// do start
+	// Enqueue this
 	if (mShowcaseQueue.size() > 0) {
-		showNextItem();
+		mShowcaseDisplayer.enqueue(this);
 	}
 }
 
 public boolean hasFired() {
 	return mPrefsGateway.getSequenceStatus() == PrefsGateway.SEQUENCE_FINISHED;
-}
-
-private void showNextItem() {
-
-	if (mShowcaseQueue.size() > 0 && !mActivity.isFinishing()) {
-		mCurrentShownShowcase = mShowcaseQueue.remove();
-		mCurrentShownShowcase.setDetachedListener(this);
-		mCurrentShownShowcase.show(mActivity);
-	} else {
-		// We've reached the end of the sequence, save the fired state
-		if (mSingleUse) {
-			mPrefsGateway.setFired();
-		}
-	}
 }
 
 /**
@@ -137,8 +126,9 @@ public void cancel() {
 	if (mCurrentShownShowcase != null) {
 		mCurrentShownShowcase.hide();
 	}
-}
 
+	mShowcaseDisplayer.onFinished(this);
+}
 
 @Override
 public void onShowcaseDetached(MaterialShowcaseView showcaseView, boolean wasDismissed) {
@@ -158,7 +148,27 @@ public void onShowcaseDetached(MaterialShowcaseView showcaseView, boolean wasDis
 	}
 }
 
+private void showNextItem() {
+	if (mShowcaseQueue.size() > 0 && !mActivity.isFinishing()) {
+		mCurrentShownShowcase = mShowcaseQueue.remove();
+		mCurrentShownShowcase.setDetachedListener(this);
+		mCurrentShownShowcase.showNow(mActivity);
+	}
+	// We've reached the end of the sequence, save the fired state
+	else {
+		if (mSingleUse) {
+			mPrefsGateway.setFired();
+		}
+		mShowcaseDisplayer.onFinished(this);
+	}
+}
+
 public void setConfig(ShowcaseConfig config) {
 	mConfig = config;
+}
+
+@Override
+public void showNow() {
+	showNextItem();
 }
 }

@@ -46,8 +46,7 @@ import java.util.List;
  * new MaterialShowcaseView.Builder(this)
  * 	.setTarget(buttonView) // Show circle around target
  * 	.setTitleText("This is my title")
- * 	.setSingleUse(idOfTheShowcaseToOnlyBeShownOnce) // Set if you only want to show the showcase
- * once
+ * 	.setSingleUse(idOfTheShowcaseToOnlyBeShownOnce) // Set if you only want to show the showcase once
  * 	.setContentText("Some text describing the feature")
  * 	.setDelay(0) // Set it to at least 300ms if your showcase calls show() in onCreate()
  * 	.setDismissText("Got it") // Will always be CAPITALIZED - When set user must click on it to continue
@@ -62,9 +61,10 @@ import java.util.List;
  * </pre>
  * Nothing in mandatory for the showcase to view
  */
-public class MaterialShowcaseView extends FrameLayout implements View.OnTouchListener, View.OnClickListener {
+public class MaterialShowcaseView extends FrameLayout implements View.OnTouchListener, View.OnClickListener, MaterialShowcaseDisplayer.ShowcaseContainer {
 
 private static final String TAG = MaterialShowcaseView.class.getSimpleName();
+private static final MaterialShowcaseDisplayer mShowcaseDisplayer = MaterialShowcaseDisplayer.getInstance();
 List<ShowcaseListener> mListeners = new ArrayList<>();
 private int mOldHeight;
 private int mOldWidth;
@@ -99,10 +99,11 @@ private CircularShapeAnimation mBackgroundAnimation = null;
 private AlphaAnimation mAlphaAnimation = null;
 private AnimationStates mAnimationState = null;
 private Path mClippingPath = new Path();
+private Activity mActivity = null;
 
 /**
  * Create a bare Material Showcase
- * @param context activity context we want to show the showcase in
+ * @param context activity context we want to showNow the showcase in
  */
 public MaterialShowcaseView(Context context) {
 	super(context);
@@ -534,6 +535,8 @@ private void removeFromWindow() {
 	}
 
 	mPrefsGateway = null;
+
+	mShowcaseDisplayer.onFinished(this);
 }
 
 private void notifyOnDisplayed() {
@@ -688,7 +691,7 @@ public void onClick(View view) {
 /**
  * Anchor the showcase to a target button; this should be an icon button. Setting a target makes the
  * background circular, if no target is set the background will be displayed in fullscreen
- * @param target location to show the circle
+ * @param target location to showNow the circle
  */
 public void setTarget(View target) {
 	setTarget(new ViewTarget(target));
@@ -697,7 +700,7 @@ public void setTarget(View target) {
 /**
  * Anchor the showcase to a target button; this should be an icon button. Setting a target makes the
  * background circular, if no target is set the background will be displayed in fullscreen
- * @param target location to show the circle
+ * @param target location to showNow the circle
  */
 public void setTarget(Target target) {
 	mTarget = target;
@@ -761,7 +764,7 @@ public void setDismissText(@StringRes int resId) {
 
 /**
  * Set the hide button text
- * @param text text to show in the hide button. Will be converted to ALL CAPS
+ * @param text text to showNow in the hide button. Will be converted to ALL CAPS
  */
 public void setDismissText(CharSequence text) {
 	if (mDismissButton != null) {
@@ -896,7 +899,7 @@ public boolean hasFired() {
 /**
  * Call this to only allow the showcase to be shown once for the app. There after you must reset the
  * showcase by calling either {@link #resetSingleUse()}, {@link #resetSingleUse(Context, String)},
- * or {@link #resetAll(Context)} to be able to show it again.
+ * or {@link #resetAll(Context)} to be able to showNow it again.
  * @param showcaseId the showcase id to only display once
  */
 public void setSingleUse(@NonNull String showcaseId) {
@@ -906,10 +909,12 @@ public void setSingleUse(@NonNull String showcaseId) {
 
 /**
  * Reveal the showcase view.
- * @param activity the mActivity to show the showcase in
+ * @param activity the mActivity to showNow the showcase in
  * @return true if the showcase was shown
  */
 public boolean show(final Activity activity) {
+	mActivity = activity;
+
 	// if we're in single use mode and have already shot our bolt then do nothing
 	if (mSingleUse) {
 		if (mPrefsGateway.hasFired()) {
@@ -920,18 +925,7 @@ public boolean show(final Activity activity) {
 		}
 	}
 
-	mHandler = new Handler();
-	mHandler.postDelayed(new Runnable() {
-		@Override
-		public void run() {
-			((ViewGroup) activity.getWindow().getDecorView()).addView(MaterialShowcaseView.this);
-
-			hideEmptyViews();
-			fixNavBarMargin();
-
-			animateReveal();
-		}
-	}, mDelayInMillis);
+	mShowcaseDisplayer.enqueue(this);
 
 	return true;
 }
@@ -950,6 +944,51 @@ private void notifyOnSkipped() {
 	if (mDetachedListener != null) {
 		mDetachedListener.onShowcaseDetached(this, mWasDismissed);
 		mDetachedListener = null;
+	}
+}
+
+/**
+ * Set content box layout params
+ * @param gravity gravity of the content box
+ * @param bottomMargin bottom margin (usually from the target)
+ * @param topMargin top margin (usually from target)
+ */
+private void applyLayoutParams(int gravity, int bottomMargin, int topMargin) {
+
+}
+
+/**
+ * Reset this showcase so that it can be shown again. Only has an effect if this is a single use
+ * showcase, i.e. that {@link #setSingleUse(String)} has been called.
+ */
+public void resetSingleUse() {
+	if (mSingleUse && mPrefsGateway != null) {
+		mPrefsGateway.resetShowcase();
+	}
+}
+
+void showNow(Activity activity) {
+	mActivity = activity;
+	showNow();
+}
+
+@Override
+public void showNow() {
+	if (mActivity != null) {
+		mHandler = new Handler();
+		mHandler.postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				((ViewGroup) mActivity.getWindow().getDecorView()).addView(MaterialShowcaseView.this);
+
+				hideEmptyViews();
+				fixNavBarMargin();
+
+				animateReveal();
+			}
+		}, mDelayInMillis);
+	} else {
+		mShowcaseDisplayer.onFinished(this);
 	}
 }
 
@@ -987,7 +1026,7 @@ private void fixNavBarMargin() {
 
 /**
  * Create a circular reveal animation. Will enlarge the background, and target circle if available,
- * and then show the content box
+ * and then showNow the content box
  */
 private void animateReveal() {
 	setShouldRender(true);
@@ -1038,26 +1077,6 @@ private void setShouldRender(boolean shouldRender) {
 	mShouldRender = shouldRender;
 }
 
-/**
- * Set content box layout params
- * @param gravity gravity of the content box
- * @param bottomMargin bottom margin (usually from the target)
- * @param topMargin top margin (usually from target)
- */
-private void applyLayoutParams(int gravity, int bottomMargin, int topMargin) {
-
-}
-
-/**
- * Reset this showcase so that it can be shown again. Only has an effect if this is a single use
- * showcase, i.e. that {@link #setSingleUse(String)} has been called.
- */
-public void resetSingleUse() {
-	if (mSingleUse && mPrefsGateway != null) {
-		mPrefsGateway.resetShowcase();
-	}
-}
-
 private enum AnimationStates {
 	REVEAL,
 	DISMISS,
@@ -1075,7 +1094,7 @@ public static class Builder {
 
 	/**
 	 * Create the builder
-	 * @param activity the activity to show the showcase in
+	 * @param activity the activity to showNow the showcase in
 	 */
 	public Builder(Activity activity) {
 		mActivity = activity;
@@ -1085,7 +1104,7 @@ public static class Builder {
 	/**
 	 * Anchor the showcase to a target button; this should be an icon button. Setting a target makes
 	 * the background circular, if no target is set the background will be displayed in fullscreen
-	 * @param target location to show the circle
+	 * @param target location to showNow the circle
 	 */
 	public Builder setTarget(View target) {
 		mShowcaseView.setTarget(target);
@@ -1095,7 +1114,7 @@ public static class Builder {
 	/**
 	 * Anchor the showcase to a target button; this should be an icon button. Setting a target makes
 	 * the background circular, if no target is set the background will be displayed in fullscreen
-	 * @param target location to show the circle
+	 * @param target location to showNow the circle
 	 */
 	public Builder setTarget(Target target) {
 		mShowcaseView.setTarget(target);
@@ -1113,7 +1132,7 @@ public static class Builder {
 
 	/**
 	 * Set the hide button text
-	 * @param text text to show in the hide button
+	 * @param text text to showNow in the hide button
 	 */
 	public Builder setDismissText(CharSequence text) {
 		if (text != null) {
@@ -1243,7 +1262,7 @@ public static class Builder {
 	/**
 	 * Call this to only allow the showcase to be shown once for the app. There after you must reset
 	 * the showcase by calling either {@link #resetSingleUse()}, {@link #resetSingleUse(Context,
-	 * String)}, or {@link #resetAll(Context)} to be able to show it again.
+	 * String)}, or {@link #resetAll(Context)} to be able to showNow it again.
 	 * @param showcaseId the showcase id to only display once
 	 */
 	public Builder setSingleUse(@NonNull String showcaseId) {
@@ -1260,7 +1279,7 @@ public static class Builder {
 	}
 
 	/**
-	 * Build and show the showcase
+	 * Build and showNow the showcase
 	 * @return created showcase view
 	 */
 	public MaterialShowcaseView show() {
