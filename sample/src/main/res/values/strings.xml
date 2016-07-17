@@ -2,7 +2,7 @@
     <string name="app_name">MaterialShowcaseView</string>
 
     <string name="action_settings">Settings</string>
-    <string name="title_activity_simple_single_example">SimpleSingleExample</string>
-    <string name="title_activity_fullscreen_example">FullscreenExample</string>
-    <string name="title_activity_sequence_example">SequenceExample</string>
+    <string name="title_activity_target_example">Target Example</string>
+    <string name="title_activity_fullscreen_example">Fullscreen Example</string>
+    <string name="title_activity_sequence_example">Sequence Example</string>
 </resources>

@@ -25,4 +25,16 @@ public Point getPoint() {
 	int y = location[1] + mView.getHeight() / 2;
 	return new Point(x, y);
 }
+
+@Override
+public int getRadius() {
+	return (int) Math.sqrt(getRadiusSq());
+}
+
+@Override
+public int getRadiusSq() {
+	double width = mView.getWidth() * 0.5;
+	double height = mView.getHeight() * 0.5;
+	return (int) (width * width + height * height);
+}
 }

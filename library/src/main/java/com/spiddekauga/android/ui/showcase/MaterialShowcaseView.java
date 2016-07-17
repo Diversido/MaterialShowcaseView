@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
@@ -20,6 +21,7 @@ import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.AppCompatButton;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -62,6 +64,7 @@ import java.util.List;
  */
 public class MaterialShowcaseView extends FrameLayout implements View.OnTouchListener, View.OnClickListener {
 
+private static final String TAG = MaterialShowcaseView.class.getSimpleName();
 List<ShowcaseListener> mListeners = new ArrayList<>();
 private int mOldHeight;
 private int mOldWidth;
@@ -91,6 +94,11 @@ private UpdateOnGlobalLayout mLayoutListener;
 private DetachedListener mDetachedListener;
 private boolean mTargetTouchable = true;
 private boolean mInitialLayoutDone = false;
+private CircularShapeAnimation mTargetAnimation = null;
+private CircularShapeAnimation mBackgroundAnimation = null;
+private AlphaAnimation mAlphaAnimation = null;
+private AnimationStates mAnimationState = null;
+private Path mClippingPath = new Path();
 
 /**
  * Create a bare Material Showcase
@@ -128,12 +136,20 @@ private void init(Context context) {
 	setDismissBackgroundColor(ShowcaseConfig.mDismissBackgroundColorDefault);
 	mContentBoxTarget = new ViewTarget(mContentBox);
 	mBackgroundShape.setTarget(mContentBoxTarget);
+	
+	mEraser = new Paint();
+	mEraser.setColor(0xFFFFFFFF);
+	mEraser.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+	mEraser.setFlags(Paint.ANTI_ALIAS_FLAG);
+	
+	mBackgroundColorPaint = new Paint();
+	mBackgroundColorPaint.setColor(mBackgroundColor);
 }
 
 /**
- * Set the background color of the dismiss button. By default this is {@link
+ * Set the background color of the hide button. By default this is {@link
  * com.spiddekauga.android.ui.showcase.R.color#material_showcase_dismiss_background}
- * @param backgroundColor background color of the dismiss button
+ * @param backgroundColor background color of the hide button
  */
 public void setDismissBackgroundColor(int backgroundColor) {
 	if (mDismissButton != null) {
@@ -154,11 +170,11 @@ public MaterialShowcaseView(Context context, AttributeSet attrs) {
 	init(context);
 }
 
-
 public MaterialShowcaseView(Context context, AttributeSet attrs, int defStyleAttr) {
 	super(context, attrs, defStyleAttr);
 	init(context);
 }
+
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public MaterialShowcaseView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
@@ -221,26 +237,7 @@ protected void onDraw(Canvas canvas) {
 
 	// Content position changed
 	if (needsLayout()) {
-		if (mTarget != null) {
-			layoutTarget();
-			updateBackgroundRadius();
-			if (useTargetAsBackgroundCenter()) {
-				mBackgroundShape.setTarget(mTarget);
-			}
-			// Center background around content box
-			else {
-				mBackgroundShape.setTarget(mContentBoxTarget);
-			}
-
-		} else {
-			layoutFullscreen();
-			updateBackgroundRadius();
-		}
-		mContentLastPoint.set((int) mContentBox.getX(), (int) mContentBox.getY());
-
-		invalidate();
-		if (!mInitialLayoutDone) {
-			mInitialLayoutDone = true;
+		if (layout()) {
 			return;
 		}
 	}
@@ -249,50 +246,104 @@ protected void onDraw(Canvas canvas) {
 	// save our 'old' dimensions
 	mOldWidth = width;
 	mOldHeight = height;
-
-	// clear canvas
-	mCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-
-	// TODO always draw the circle even in fullscreen so we get some nice animations
-	// draw background circle
-	if (mTarget != null) {
-		if (mBackgroundColorPaint == null) {
-			mBackgroundColorPaint = new Paint();
-			mBackgroundColorPaint.setColor(mBackgroundColor);
-		}
-		mBackgroundShape.draw(mCanvas, mBackgroundColorPaint);
-	}
-	// Fullscreen background
-	else {
-		mCanvas.drawColor(mBackgroundColor);
-	}
-
-	// Prepare eraser Paint if needed
-	if (mEraser == null) {
-		mEraser = new Paint();
-		mEraser.setColor(0xFFFFFFFF);
-		mEraser.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-		mEraser.setFlags(Paint.ANTI_ALIAS_FLAG);
-	}
-
-	// draw (erase) shape
-	if (mTargetShape != null) {
-		mTargetShape.draw(mCanvas, mEraser);
-	}
-
-	// Draw the bitmap on our views  canvas.
-	canvas.drawBitmap(mBitmap, 0, 0, null);
+	
+	updateAnimations();
+	drawShapes(canvas);
 }
 
 private boolean needsLayout() {
 	return !mInitialLayoutDone ||
 			!mContentLastPoint.equals((int) mContentBox.getX(), (int) mContentBox.getY()) ||
 			(mTarget != null && !mTargetLastPoint.equals(mTarget.getPoint()));
+}
 
+/**
+ * Layout all shapes
+ * @return true if we should skip the rest of the drawing
+ */
+private boolean layout() {
+	if (mTarget != null) {
+		layoutTarget();
+		if (useTargetAsBackgroundCenter()) {
+			mBackgroundShape.setTarget(mTarget);
+		}
+		// Center background around content box
+		else {
+			mBackgroundShape.setTarget(mContentBoxTarget);
+		}
+	} else {
+		mBackgroundShape.setTarget(mContentBoxTarget);
+		layoutFullscreen();
+	}
+	mContentLastPoint.set((int) mContentBox.getX(), (int) mContentBox.getY());
+
+	invalidate();
+	if (!mInitialLayoutDone) {
+		mInitialLayoutDone = true;
+		return true;
+	} else {
+		updateBackgroundRadius();
+	}
+
+	return false;
+}
+
+private void updateAnimations() {
+	// Target animation
+	if (mTargetAnimation != null) {
+		boolean done = mTargetAnimation.update(mTargetShape);
+		if (done) {
+			mTargetAnimation = null;
+		}
+	}
+	// Background animation
+	if (mBackgroundAnimation != null) {
+		boolean done = mBackgroundAnimation.update(mBackgroundShape);
+		if (done) {
+			mBackgroundAnimation = null;
+			onAnimaitonDone();
+		}
+
+		// Update clipping path
+		Point backgroundPoint = mBackgroundShape.getPoint();
+		Log.d(TAG, "updateAnimations() — Clipping radius: " + mBackgroundShape.getRadius());
+		mClippingPath.reset();
+		mClippingPath.addCircle(backgroundPoint.x, backgroundPoint.y, mBackgroundShape.getRadius(), Path.Direction.CW);
+	}
+
+	if (mAlphaAnimation != null) {
+		boolean done = mAlphaAnimation.update(this);
+		if (done) {
+			mAlphaAnimation = null;
+		}
+	}
+
+	if (mAnimationState != AnimationStates.DONE) {
+		invalidate();
+	}
+}
+
+private void drawShapes(Canvas canvas) {
+	if (mCanvas != null) {
+		// Clear canvas
+		mCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+
+		// draw background circle
+		mBackgroundShape.draw(mCanvas, mBackgroundColorPaint);
+
+		// draw (erase) shape
+		if (mTargetShape != null) {
+			mTargetShape.draw(mCanvas, mEraser);
+		}
+
+		// Draw the bitmap on our views  canvas.
+		canvas.drawBitmap(mBitmap, 0, 0, null);
+	}
 }
 
 private void layoutTarget() {
 	Point targetPoint = mTarget.getPoint();
+	mTargetLastPoint.set(targetPoint.x, targetPoint.y);
 
 	// now figure out whether to put content above or below it
 	int height = getMeasuredHeight();
@@ -342,38 +393,6 @@ private void layoutTarget() {
 }
 
 /**
- * Calculate max radius from background circle middle to content box
- */
-private void updateBackgroundRadius() {
-	mBackgroundShape.setRadius(0);
-
-	// Get content location without padding
-	int left = mContentBox.getLeft();
-	int right = mContentBox.getRight();
-	int top = mContentBox.getTop();
-	int bottom = mContentBox.getBottom();
-
-	Point[] contentPoints = new Point[4];
-	contentPoints[0] = new Point(left, top);
-	contentPoints[1] = new Point(left, bottom);
-	contentPoints[2] = new Point(right, top);
-	contentPoints[3] = new Point(right, bottom);
-
-	Point diffPoint = new Point();
-	int maxDistance = 0;
-	for (int i = 0; i < contentPoints.length; i++) {
-		diffPoint.set(contentPoints[i].x - mBackgroundShape.getPoint().x, contentPoints[i].y - mBackgroundShape.getPoint().y);
-		int distance = (int) Math.sqrt(diffPoint.x * diffPoint.x + diffPoint.y * diffPoint.y);
-
-		if (distance > maxDistance) {
-			maxDistance = distance;
-		}
-	}
-
-	mBackgroundShape.setRadius(maxDistance);
-}
-
-/**
  * Check if we should use target as background center. I.e. checks if the target is close to a
  * border or not.
  * @return true if we should use target as background center, false if we should use content box as
@@ -416,12 +435,126 @@ private void layoutFullscreen() {
 }
 
 /**
+ * Calculate max radius from background circle middle to content box
+ */
+private void updateBackgroundRadius() {
+	mBackgroundShape.setRadius(0);
+
+	// Get content location without padding
+	int left = mContentBox.getLeft();
+	int right = mContentBox.getRight();
+	int top = mContentBox.getTop();
+	int bottom = mContentBox.getBottom();
+
+	int maxRadius = 0;
+
+	// Around target and content
+	if (mTarget != null) {
+		Point[] contentPoints = new Point[4];
+		contentPoints[0] = new Point(left, top);
+		contentPoints[1] = new Point(left, bottom);
+		contentPoints[2] = new Point(right, top);
+		contentPoints[3] = new Point(right, bottom);
+
+		Point diffPoint = new Point();
+
+		// Check content points
+		Point centerPoint = mBackgroundShape.getPoint();
+		for (Point contentPoint : contentPoints) {
+			diffPoint.set(contentPoint.x - centerPoint.x, contentPoint.y - centerPoint.y);
+			int distance = diffPoint.x * diffPoint.x + diffPoint.y * diffPoint.y;
+
+			if (distance > maxRadius) {
+				maxRadius = distance;
+			}
+		}
+		maxRadius = (int) Math.sqrt(maxRadius);
+
+		// Check to target
+		Point targetPoint = mTargetShape.getPoint();
+		diffPoint.set(targetPoint.x - centerPoint.x, targetPoint.y - centerPoint.y);
+		int distance = (int) Math.sqrt(diffPoint.x * diffPoint.x + diffPoint.y * diffPoint.y);
+		distance += ShowcaseConfig.mTargetRadiusDefault + ShowcaseConfig.mTargetPadding;
+
+		if (distance > maxRadius) {
+			maxRadius = distance;
+		}
+	}
+	// Fullscreen
+	else {
+		int width = getMeasuredWidth();
+		int height = getMeasuredHeight();
+		maxRadius = (int) Math.sqrt(width * width + height * height) / 2;
+		maxRadius += 10; // Some extra
+	}
+
+	// Background animation
+	if (mBackgroundAnimation == null && mAnimationState == AnimationStates.REVEAL) {
+		mBackgroundAnimation = new CircularShapeAnimation(ShowcaseConfig.ANIMATION_IN_TIME, 0, maxRadius, CircularAnimation.Algorithm.EASE_IN_OUT);
+		mBackgroundAnimation.start();
+	}
+}
+
+private void onAnimaitonDone() {
+	switch (mAnimationState) {
+	case DISMISS:
+	case TARGET_PRESSED:
+		removeFromWindow();
+		break;
+
+	case REVEAL:
+		notifyOnDisplayed();
+		break;
+	}
+
+	mAnimationState = AnimationStates.DONE;
+}
+
+private void removeFromWindow() {
+	if (getParent() != null && getParent() instanceof ViewGroup) {
+		((ViewGroup) getParent()).removeView(this);
+	}
+
+	mWasDismissed = true;
+
+	if (mBitmap != null) {
+		mBitmap.recycle();
+		mBitmap = null;
+	}
+
+	mEraser = null;
+	mCanvas = null;
+	mHandler = null;
+
+	getViewTreeObserver().removeGlobalOnLayoutListener(mLayoutListener);
+	mLayoutListener = null;
+
+	if (mPrefsGateway != null) {
+		mPrefsGateway.close();
+	}
+
+	mPrefsGateway = null;
+}
+
+private void notifyOnDisplayed() {
+	for (ShowcaseListener listener : mListeners) {
+		listener.onShowcaseDisplayed(this);
+	}
+}
+
+/**
  * Set the background color of the circle or fullscreen area.
  * @param backgroundColor the background color to use. Note that according to Material's design
  * document the opacity of the color should be 96%, 246, or F5.
  */
 public void setBackgroundColor(int backgroundColor) {
 	mBackgroundColor = backgroundColor;
+}
+
+@Override
+protected void dispatchDraw(Canvas canvas) {
+	canvas.clipPath(mClippingPath);
+	super.dispatchDraw(canvas);
 }
 
 @Override
@@ -453,9 +586,10 @@ private void notifyOnDismissed() {
 
 @Override
 public boolean onTouch(View v, MotionEvent event) {
-	if (event.getAction() == MotionEvent.ACTION_UP) {
+	// Only handle down press
+	if (event.getAction() == MotionEvent.ACTION_DOWN) {
 
-		// Don't dismiss on touch if dismiss button is visible
+		// Don't hide on touch if hide button is visible
 		if (mDismissButton == null || mDismissButton.getVisibility() == GONE) {
 
 			// Dismiss anywhere while in fullscreen
@@ -468,14 +602,14 @@ public boolean onTouch(View v, MotionEvent event) {
 					int diffX = targetPoint.x - (int) event.getX();
 					int diffY = targetPoint.y - (int) event.getY();
 					int diffDistanceSq = diffX * diffX + diffY * diffY;
-					if (diffDistanceSq <= ShowcaseConfig.mTargetRadiusDefaultSq) {
-						hide();
+					if (diffDistanceSq <= mTarget.getRadiusSq()) {
+						animateTargetPressed();
 						notifyOnTargetPressed();
 						return false;
 					}
 				}
 
-				// Test if we touched outside the background area to dismiss
+				// Test if we touched outside the background area to hide
 				Point backgroundPoint = mBackgroundShape.getPoint();
 				int diffX = backgroundPoint.x - (int) event.getX();
 				int diffY = backgroundPoint.y - (int) event.getY();
@@ -496,9 +630,28 @@ public boolean onTouch(View v, MotionEvent event) {
 public void hide() {
 	// This flag is used to indicate to onDetachedFromWindow that the showcase view was dismissed purposefully (by the user or programmatically)
 	mWasDismissed = true;
+	animateDismiss();
+}
 
-	// TODO animate
-	removeFromWindow();
+/**
+ * Create a circular expand and fade out animation when a target has been pressed
+ */
+private void animateTargetPressed() {
+	mWasDismissed = true;
+	long hideTime = ShowcaseConfig.ANIMATION_PRESSED_TIME;
+	mAnimationState = AnimationStates.TARGET_PRESSED;
+
+	int targetRadius = mTargetShape.getRadius();
+	int endRadius = (int) (targetRadius * 1.4);
+	mTargetAnimation = new CircularShapeAnimation(hideTime, targetRadius, endRadius, CircularAnimation.Algorithm.EASE_OUT);
+
+	int backgroundRadius = mBackgroundShape.getRadius();
+	endRadius = (int) (backgroundRadius * 1.4);
+	mBackgroundAnimation = new CircularShapeAnimation(hideTime, backgroundRadius, endRadius, CircularAnimation.Algorithm.EASE_OUT);
+
+	mAlphaAnimation = new AlphaAnimation(hideTime, 1, 0);
+
+	invalidate();
 }
 
 private void notifyOnTargetPressed() {
@@ -507,35 +660,20 @@ private void notifyOnTargetPressed() {
 	}
 }
 
-private void removeFromWindow() {
-	if (getParent() != null && getParent() instanceof ViewGroup) {
-		((ViewGroup) getParent()).removeView(this);
-	}
-
-	if (mBitmap != null) {
-		mBitmap.recycle();
-		mBitmap = null;
-	}
-
-	mEraser = null;
-	mCanvas = null;
-	mHandler = null;
-
-	getViewTreeObserver().removeGlobalOnLayoutListener(mLayoutListener);
-	mLayoutListener = null;
-
-	if (mPrefsGateway != null) {
-		mPrefsGateway.close();
-	}
-
-	mPrefsGateway = null;
-}
-
 /**
- * Fade out the view
+ * Create a circular hide animation. Will shrink the background, and target circle if available,
+ * and then hide it
  */
-private void fadeOut() {
-	// TODO set fade out
+private void animateDismiss() {
+	long hideTime = ShowcaseConfig.ANIMATION_HIDE_TIME;
+	mAnimationState = AnimationStates.DISMISS;
+	if (mTargetShape != null) {
+		mTargetAnimation = new CircularShapeAnimation(hideTime, mTargetShape.getRadius(), 0, CircularAnimation.Algorithm.EASE_IN_OUT);
+	}
+	if (mBackgroundShape != null) {
+		mBackgroundAnimation = new CircularShapeAnimation(hideTime, mBackgroundShape.getRadius(), 0, CircularAnimation.Algorithm.EASE_IN_OUT);
+	}
+	invalidate();
 }
 
 /**
@@ -565,7 +703,7 @@ public void setTarget(Target target) {
 	mTarget = target;
 
 	if (mTarget != null) {
-		mTargetShape = new CircleShape(ShowcaseConfig.mTargetRadiusDefault);
+		mTargetShape = new CircleShape();
 		mTargetShape.setTarget(target);
 	}
 }
@@ -611,8 +749,8 @@ public void setContentText(@StringRes int resId) {
 }
 
 /**
- * Set the dismiss button text
- * @param resId string resource id of the dismiss text. Will be converted to ALL CAPS
+ * Set the hide button text
+ * @param resId string resource id of the hide text. Will be converted to ALL CAPS
  */
 public void setDismissText(@StringRes int resId) {
 	if (mDismissButton != null) {
@@ -622,8 +760,8 @@ public void setDismissText(@StringRes int resId) {
 }
 
 /**
- * Set the dismiss button text
- * @param text text to show in the dismiss button. Will be converted to ALL CAPS
+ * Set the hide button text
+ * @param text text to show in the hide button. Will be converted to ALL CAPS
  */
 public void setDismissText(CharSequence text) {
 	if (mDismissButton != null) {
@@ -710,8 +848,8 @@ public void setContentTextColor(int textColor) {
 }
 
 /**
- * Set the color of the dismiss text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#text_color_secondary}
- * @param textColor color of the dismiss button text
+ * Set the color of the hide text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#text_color_secondary}
+ * @param textColor color of the hide button text
  */
 public void setDismissTextColor(int textColor) {
 	if (mDismissButton != null) {
@@ -738,7 +876,7 @@ public void setRenderOverNavigationBar(boolean renderOverNav) {
 }
 
 /**
- * Add a showcase listener to listen to dismiss, display, and skipped events.
+ * Add a showcase listener to listen to hide, display, and skipped events.
  * @param listener showcase listener
  */
 public void addListener(ShowcaseListener listener) {
@@ -759,7 +897,7 @@ public boolean hasFired() {
  * Call this to only allow the showcase to be shown once for the app. There after you must reset the
  * showcase by calling either {@link #resetSingleUse()}, {@link #resetSingleUse(Context, String)},
  * or {@link #resetAll(Context)} to be able to show it again.
- * @param showcaseId
+ * @param showcaseId the showcase id to only display once
  */
 public void setSingleUse(@NonNull String showcaseId) {
 	mSingleUse = true;
@@ -791,7 +929,7 @@ public boolean show(final Activity activity) {
 			hideEmptyViews();
 			fixNavBarMargin();
 
-			fadeIn();
+			animateReveal();
 		}
 	}, mDelayInMillis);
 
@@ -804,8 +942,8 @@ public boolean show(final Activity activity) {
  */
 private void notifyOnSkipped() {
 	for (ShowcaseListener listener : mListeners) {
-			listener.onShowcaseSkipped(this);
-		}
+		listener.onShowcaseSkipped(this);
+	}
 	mListeners.clear();
 
 	// internal listener used by sequence for storing progress within the sequence
@@ -848,14 +986,17 @@ private void fixNavBarMargin() {
 }
 
 /**
- * Fade in the showcase
+ * Create a circular reveal animation. Will enlarge the background, and target circle if available,
+ * and then show the content box
  */
-private void fadeIn() {
-	// TODO Fade in...
+private void animateReveal() {
 	setShouldRender(true);
 	setVisibility(VISIBLE);
-	mContentBox.setVisibility(INVISIBLE);
-	notifyOnDisplayed();
+
+	mAnimationState = AnimationStates.REVEAL;
+	if (mTarget != null) {
+		mTargetAnimation = new CircularShapeAnimation(ShowcaseConfig.ANIMATION_IN_TIME, 0, ShowcaseConfig.mTargetRadiusDefault, CircularAnimation.Algorithm.EASE_IN_OUT);
+	}
 }
 
 private static int getSoftButtonsBarSizePort(Activity activity) {
@@ -897,12 +1038,6 @@ private void setShouldRender(boolean shouldRender) {
 	mShouldRender = shouldRender;
 }
 
-private void notifyOnDisplayed() {
-	for (ShowcaseListener listener : mListeners) {
-		listener.onShowcaseDisplayed(this);
-	}
-}
-
 /**
  * Set content box layout params
  * @param gravity gravity of the content box
@@ -921,6 +1056,13 @@ public void resetSingleUse() {
 	if (mSingleUse && mPrefsGateway != null) {
 		mPrefsGateway.resetShowcase();
 	}
+}
+
+private enum AnimationStates {
+	REVEAL,
+	DISMISS,
+	TARGET_PRESSED,
+	DONE,
 }
 
 /**
@@ -961,8 +1103,8 @@ public static class Builder {
 	}
 
 	/**
-	 * Set the dismiss button text
-	 * @param resId string resource id of the dismiss text
+	 * Set the hide button text
+	 * @param resId string resource id of the hide text
 	 */
 	public Builder setDismissText(@StringRes int resId) {
 		mShowcaseView.setDismissText(resId);
@@ -970,8 +1112,8 @@ public static class Builder {
 	}
 
 	/**
-	 * Set the dismiss button text
-	 * @param text text to show in the dismiss button
+	 * Set the hide button text
+	 * @param text text to show in the hide button
 	 */
 	public Builder setDismissText(CharSequence text) {
 		if (text != null) {
@@ -1061,8 +1203,8 @@ public static class Builder {
 	}
 
 	/**
-	 * Set the color of the dismiss text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#text_color_secondary}
-	 * @param textColor color of the dismiss button text
+	 * Set the color of the hide text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#text_color_secondary}
+	 * @param textColor color of the hide button text
 	 */
 	public Builder setDismissTextColor(int textColor) {
 		mShowcaseView.setDismissTextColor(textColor);
@@ -1070,9 +1212,9 @@ public static class Builder {
 	}
 
 	/**
-	 * Set the background color of the dismiss button. By default this is {@link
+	 * Set the background color of the hide button. By default this is {@link
 	 * com.spiddekauga.android.ui.showcase.R.color#material_showcase_dismiss_background}
-	 * @param backgroundColor background color of the dismiss button
+	 * @param backgroundColor background color of the hide button
 	 */
 	public Builder setDismissBackgroundColor(int backgroundColor) {
 		mShowcaseView.setDismissBackgroundColor(backgroundColor);
@@ -1090,7 +1232,7 @@ public static class Builder {
 	}
 
 	/**
-	 * Add a showcase listener to listen to dismiss, display, and skipped events.
+	 * Add a showcase listener to listen to hide, display, and skipped events.
 	 * @param listener showcase listener
 	 */
 	public Builder addListener(ShowcaseListener listener) {
@@ -1102,7 +1244,7 @@ public static class Builder {
 	 * Call this to only allow the showcase to be shown once for the app. There after you must reset
 	 * the showcase by calling either {@link #resetSingleUse()}, {@link #resetSingleUse(Context,
 	 * String)}, or {@link #resetAll(Context)} to be able to show it again.
-	 * @param showcaseId
+	 * @param showcaseId the showcase id to only display once
 	 */
 	public Builder setSingleUse(@NonNull String showcaseId) {
 		mShowcaseView.setSingleUse(showcaseId);

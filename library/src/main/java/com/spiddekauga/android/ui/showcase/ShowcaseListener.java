@@ -20,7 +20,7 @@ void onShowcaseSkipped(MaterialShowcaseView showcaseView);
 
 /**
  * Called when the target was pressed. Can only be pressed if there is a target and there is no
- * dismiss text. The target should get the touch event too.
+ * hide text. The target should get the touch event too.
  */
 void onTargetPressed(MaterialShowcaseView showcaseView);
 }

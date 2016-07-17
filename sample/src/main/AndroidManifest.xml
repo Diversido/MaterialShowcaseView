@@ -17,8 +17,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".SimpleSingleExample"
-            android:label="@string/title_activity_simple_single_example" >
+            android:name=".TargetExamples"
+            android:label="@string/title_activity_target_example" >
         </activity>
         <activity
             android:name=".FullscreenExample"

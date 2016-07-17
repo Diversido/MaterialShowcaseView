@@ -18,8 +18,8 @@ static final long ANIMATION_PRESSED_TIME = 300;
 static int mBackgroundColorDefault = -1;
 static int mDismissBackgroundColorDefault = -1;
 static int mTargetRadiusDefault = -1;
-static int mTargetRadiusDefaultSq = -1;
 static int mTargetNearBorderDistance = -1;
+static int mTargetPadding = -1;
 private static boolean mInitialized = false;
 List<ShowcaseListener> mListeners = new ArrayList<>();
 private long mDelay = -1;
@@ -40,8 +40,8 @@ static void init(Context context) {
 		mBackgroundColorDefault = getColor(resources, R.color.material_showcase_background);
 		mDismissBackgroundColorDefault = getColor(resources, R.color.material_showcase_dismiss_background);
 		mTargetRadiusDefault = resources.getDimensionPixelSize(R.dimen.material_showcase_target_radius);
-		mTargetRadiusDefaultSq = mTargetRadiusDefault * mTargetRadiusDefault;
 		mTargetNearBorderDistance = resources.getDimensionPixelSize(R.dimen.material_showcase_target_near_border);
+		mTargetPadding = resources.getDimensionPixelOffset(R.dimen.material_showcase_target_padding);
 		mInitialized = true;
 	}
 }
@@ -70,9 +70,9 @@ public int getDismissBackgroundColor() {
 }
 
 /**
- * Set the background color of the dismiss button. By default this is {@link
+ * Set the background color of the hide button. By default this is {@link
  * com.spiddekauga.android.ui.showcase.R.color#material_showcase_dismiss_background}
- * @param backgroundColor background color of the dismiss button
+ * @param backgroundColor background color of the hide button
  */
 public void setDismissBackgroundColor(int backgroundColor) {
 	mDismissBackgroundColor = backgroundColor;
@@ -154,8 +154,8 @@ public int getDismissTextColor() {
 }
 
 /**
- * Set the color of the dismiss text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#text_color_secondary}
- * @param textColor color of the dismiss button text
+ * Set the color of the hide text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#text_color_secondary}
+ * @param textColor color of the hide button text
  */
 public void setDismissTextColor(int textColor) {
 	mDismissTextColor = textColor;
@@ -182,7 +182,7 @@ public boolean isRenderOverNavigationBarSet() {
 }
 
 /**
- * Add a showcase listener to listen to dismiss, display, and skipped events.
+ * Add a showcase listener to listen to hide, display, and skipped events.
  * @param listener showcase listener
  */
 public void addListener(ShowcaseListener listener) {

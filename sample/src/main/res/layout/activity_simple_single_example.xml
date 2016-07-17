@@ -6,7 +6,7 @@
 				android:paddingLeft="@dimen/activity_horizontal_margin"
 				android:paddingRight="@dimen/activity_horizontal_margin"
 				android:paddingTop="@dimen/activity_vertical_margin"
-				tools:context=".SimpleSingleExample">
+				tools:context=".TargetExamples">
 
 	<android.support.design.widget.FloatingActionButton
 		android:id="@+id/corner_button"
@@ -21,7 +21,9 @@
 		android:id="@+id/center_button"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_centerInParent="true"
+		android:layout_centerVertical="true"
+		android:layout_marginLeft="60dp"
+		android:layout_marginStart="60dp"
 		android:src="@drawable/add_24dp"/>
 
 	<android.support.v7.widget.AppCompatButton
@@ -30,15 +32,23 @@
 		android:layout_height="wrap_content"
 		android:layout_above="@+id/show_center_button"
 		android:layout_centerHorizontal="true"
-		android:text="Reveal Top Left Showcase"/>
+		android:text="Near border Showcase"/>
 
 	<android.support.v7.widget.AppCompatButton
 		android:id="@+id/show_center_button"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
+		android:layout_above="@+id/show_target_button"
+		android:layout_centerHorizontal="true"
+		android:text="Middle Showcase"/>
+
+	<android.support.v7.widget.AppCompatButton
+		android:id="@+id/show_target_button"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
 		android:layout_above="@+id/reset_button"
 		android:layout_centerHorizontal="true"
-		android:text="Reveal Center Showcase"/>
+		android:text="Target Pressable Showcase"/>
 
 	<android.support.v7.widget.AppCompatButton
 		android:id="@+id/reset_button"

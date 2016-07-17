@@ -14,9 +14,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 protected void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.activity_main);
-	Button button = (Button) findViewById(R.id.btn_simple_example);
+	Button button = (Button) findViewById(R.id.btn_target_example);
 	button.setOnClickListener(this);
-	button = (Button) findViewById(R.id.btn_custom_example);
+	button = (Button) findViewById(R.id.btn_fullscreen_example);
 	button.setOnClickListener(this);
 	button = (Button) findViewById(R.id.btn_sequence_example);
 	button.setOnClickListener(this);
@@ -31,11 +31,11 @@ public void onClick(View v) {
 	Intent intent = null;
 
 	switch (v.getId()) {
-	case R.id.btn_simple_example:
-		intent = new Intent(this, SimpleSingleExample.class);
+	case R.id.btn_target_example:
+		intent = new Intent(this, TargetExamples.class);
 		break;
 
-	case R.id.btn_custom_example:
+	case R.id.btn_fullscreen_example:
 		intent = new Intent(this, FullscreenExample.class);
 		break;
 

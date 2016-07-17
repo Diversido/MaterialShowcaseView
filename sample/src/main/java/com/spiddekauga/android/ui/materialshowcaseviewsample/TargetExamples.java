@@ -9,10 +9,11 @@ import android.widget.Toast;
 
 import com.spiddekauga.android.ui.showcase.MaterialShowcaseView;
 
-public class SimpleSingleExample extends AppCompatActivity implements View.OnClickListener {
+public class TargetExamples extends AppCompatActivity implements View.OnClickListener {
 
 private static final String SHOWCASE_CENTER_ID = "center example";
 private static final String SHOWCASE_CORNER_ID = "corner example";
+private static final String SHOWCASE_TARGET_PRESSABLE_ID = "target pressable example";
 private FloatingActionButton mCornerButton;
 private FloatingActionButton mCenterButton;
 
@@ -24,6 +25,8 @@ protected void onCreate(Bundle savedInstanceState) {
 	Button button = (Button) findViewById(R.id.show_center_button);
 	button.setOnClickListener(this);
 	button = (Button) findViewById(R.id.show_corner_button);
+	button.setOnClickListener(this);
+	button = (Button) findViewById(R.id.show_target_button);
 	button.setOnClickListener(this);
 	button = (Button) findViewById(R.id.reset_button);
 	button.setOnClickListener(this);
@@ -40,6 +43,8 @@ public void onClick(View v) {
 		presentShowcaseCorner();
 	} else if (v.getId() == R.id.show_center_button) {
 		presentShowcaseCenter();
+	} else if (v.getId() == R.id.show_target_button) {
+		presentShowcaseTargetPressable();
 	} else if (v.getId() == R.id.corner_button) {
 		Toast.makeText(this, "Pressed corner button", Toast.LENGTH_SHORT).show();
 	} else if (v.getId() == R.id.center_button) {
@@ -47,6 +52,7 @@ public void onClick(View v) {
 	} else if (v.getId() == R.id.reset_button) {
 		MaterialShowcaseView.resetSingleUse(this, SHOWCASE_CENTER_ID);
 		MaterialShowcaseView.resetSingleUse(this, SHOWCASE_CORNER_ID);
+		MaterialShowcaseView.resetSingleUse(this, SHOWCASE_TARGET_PRESSABLE_ID);
 		Toast.makeText(this, "Showcase reset", Toast.LENGTH_SHORT).show();
 	}
 }
@@ -56,7 +62,7 @@ private void presentShowcaseCorner() {
 			.setTarget(mCornerButton)
 			.setTitleText("Near border")
 			.setDismissText("got it")
-			.setContentText("Targets near borders have a large circle according to Material's design document.")
+			.setContentText("Targets near borders have a large circle centered at the target.")
 			.setDelay(0) // optional but starting animations immediately in onCreate can make them choppy
 			.setSingleUse(SHOWCASE_CORNER_ID) // provide a unique ID used to ensure it is only shown once
 			.show();
@@ -65,11 +71,21 @@ private void presentShowcaseCorner() {
 private void presentShowcaseCenter() {
 	new MaterialShowcaseView.Builder(this)
 			.setTarget(mCenterButton)
-			.setTitleText("Other targets")
+			.setTitleText("Middle targets")
 			.setDismissText("got it")
-			.setContentText("Targets that aren't close to a border have a small circle.")
+			.setContentText("Targets that aren't close to a border have a smaller circle centered at the content text.")
 			.setDelay(0) // optional but starting animations immediately in onCreate can make them choppy
 			.setSingleUse(SHOWCASE_CENTER_ID) // provide a unique ID used to ensure it is only shown once
+			.show();
+}
+
+private void presentShowcaseTargetPressable() {
+	new MaterialShowcaseView.Builder(this)
+			.setTarget(mCenterButton)
+			.setTitleText("Try to press it!")
+			.setContentText("Targets without a hide text are pressable. To hide click outside the background area.")
+			.setDelay(0) // optional but starting animations immediately in onCreate can make them choppy
+			.setSingleUse(SHOWCASE_TARGET_PRESSABLE_ID) // provide a unique ID used to ensure it is only shown once
 			.show();
 }
 }

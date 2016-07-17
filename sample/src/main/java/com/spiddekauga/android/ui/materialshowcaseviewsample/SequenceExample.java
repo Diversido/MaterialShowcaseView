@@ -63,7 +63,7 @@ private void presentShowcaseSequence() {
 			new MaterialShowcaseView.Builder(this)
 					.setTarget(mTopButton)
 					.setTitleText("Press button")
-					.setContentText("You can click on the target if you don't call setTargetTouchable(false) or set a dismiss text")
+					.setContentText("You can click on the target if you don't call setTargetTouchable(false) or set a hide text")
 					.build()
 	);
 
@@ -72,7 +72,7 @@ private void presentShowcaseSequence() {
 	config.setDelay(500);
 
 	// 2
-	sequence.addSequenceItem(mBottomRightButton, "Click outside to dismiss", "Click outside the area dismiss", null);
+	sequence.addSequenceItem(mBottomRightButton, "Click outside to hide", "Click outside the area hide", null);
 
 	// 3
 	sequence.addSequenceItem(
