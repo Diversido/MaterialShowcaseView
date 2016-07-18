@@ -8,6 +8,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.spiddekauga.android.ui.showcase.MaterialShowcaseView;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
 @Override
@@ -44,7 +46,7 @@ public void onClick(View v) {
 		break;
 
 	case R.id.btn_reset_all:
-//		MaterialShowcaseView.resetAll(this);
+		MaterialShowcaseView.resetAll(this);
 		Toast.makeText(this, "All Showcases reset", Toast.LENGTH_SHORT).show();
 		break;
 	}
