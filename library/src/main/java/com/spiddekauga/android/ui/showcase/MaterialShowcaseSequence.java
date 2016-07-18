@@ -16,21 +16,35 @@ private ShowcaseConfig mConfig;
 private int mSequencePosition = 0;
 private MaterialShowcaseView mCurrentShownShowcase;
 
+/**
+ * Create a showcase sequence for single use
+ * @param activity the activity to display the showcase in
+ * @param sequenceId unique sequence id
+ */
 public MaterialShowcaseSequence(Activity activity, String sequenceId) {
 	this(activity);
 	singleUse(sequenceId);
 }
 
+/**
+ * Create a showcase sequence
+ * @param activity the activity to display the showcase in
+ */
 public MaterialShowcaseSequence(Activity activity) {
 	mActivity = activity;
 	mShowcaseQueue = new LinkedList<>();
 }
 
-public MaterialShowcaseSequence singleUse(String sequenceID) {
+/**
+ * Set the sequence as single use
+ * @param sequenceId unique id of the sequence
+ */
+public MaterialShowcaseSequence singleUse(String sequenceId) {
 	mSingleUse = true;
-	mPrefsGateway = new PrefsGateway(mActivity, sequenceID);
+	mPrefsGateway = new PrefsGateway(mActivity, sequenceId);
 	return this;
 }
+
 
 public MaterialShowcaseSequence addSequenceItem(int contentResId, int dismissTextResId) {
 	return addSequenceItem(mActivity.getString(contentResId), mActivity.getString(dismissTextResId));
@@ -121,6 +135,8 @@ public void cancel() {
 
 	if (mPrefsGateway != null) {
 		mPrefsGateway.setSequenceStatus(mSequencePosition);
+		mPrefsGateway.close();
+		mPrefsGateway = null;
 	}
 
 	if (mCurrentShownShowcase != null) {
@@ -163,10 +179,18 @@ private void showNextItem() {
 	}
 }
 
+/**
+ * Set a config to be applied to all subsequent showcases that are added, i.e. calls {@link
+ * MaterialShowcaseView#setConfig(ShowcaseConfig)}.
+ * @param config configuration for all subsequent showcases
+ */
 public void setConfig(ShowcaseConfig config) {
 	mConfig = config;
 }
 
+/**
+ * Used internally, don't call this directly! Instead call {@link #show()}
+ */
 @Override
 public void showNow() {
 	showNextItem();

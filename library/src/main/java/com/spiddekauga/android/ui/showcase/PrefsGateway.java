@@ -17,13 +17,18 @@ public PrefsGateway(Context context, String showcaseId) {
 	mShowcaseId = showcaseId;
 }
 
+/**
+ * Reset all showcases
+ * @param context current context in the activity
+ */
 public static void resetAll(Context context) {
 	SharedPreferences internal = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 	internal.edit().clear().apply();
 }
 
 /***
- * Used for individual showcases
+ * Check if an individual showcase has fired
+ * @return true if an individual showcase has fired
  */
 boolean hasFired() {
 	int status = getSequenceStatus();
@@ -31,7 +36,9 @@ boolean hasFired() {
 }
 
 /***
- * Used for sequence showcases
+ * Check if a sequence showcase has fired and how many showcases it has fired in that case
+ * @return number of showcases fired, {@link #SEQUENCE_NEVER_STARTED} if it hasn't started,or {@link #SEQUENCE_FINISHED}
+ * the entire sequence has finished.
  */
 int getSequenceStatus() {
 	return mContext
@@ -40,22 +47,37 @@ int getSequenceStatus() {
 
 }
 
-void setSequenceStatus(int status) {
+/**
+ * Update the number of showcases that has been fired in a sequence
+ * @param position how many showcases has been fired in the sequence
+ */
+void setSequenceStatus(int position) {
 	SharedPreferences internal = mContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-	internal.edit().putInt(STATUS + mShowcaseId, status).apply();
+	internal.edit().putInt(STATUS + mShowcaseId, position).apply();
 }
 
+/**
+ * Sets the showcase or sequence as fired
+ */
 void setFired() {
 	setSequenceStatus(SEQUENCE_FINISHED);
 }
 
+/**
+ * Reset the showcase or sequence,
+ */
 public void resetShowcase() {
 	resetShowcase(mContext, mShowcaseId);
 }
 
-static void resetShowcase(Context context, String showcaseID) {
+/**
+ * Reset a specific showcase
+ * @param context context for getting the preferences
+ * @param showcaseId the showcase to reset
+ */
+static void resetShowcase(Context context, String showcaseId) {
 	SharedPreferences internal = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-	internal.edit().putInt(STATUS + showcaseID, SEQUENCE_NEVER_STARTED).apply();
+	internal.edit().putInt(STATUS + showcaseId, SEQUENCE_NEVER_STARTED).apply();
 }
 
 public void close() {

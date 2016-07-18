@@ -972,6 +972,9 @@ void showNow(Activity activity) {
 	showNow();
 }
 
+/**
+ * Used internally, don't call this directly! Instead call {@link #show(Activity)}
+ */
 @Override
 public void showNow() {
 	if (mActivity != null) {
