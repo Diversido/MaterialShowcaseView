@@ -8,8 +8,8 @@ import java.util.Queue;
  */
 class MaterialShowcaseDisplayer {
 private static MaterialShowcaseDisplayer mInstance = null;
-private ShowcaseContainer mCurrentShowcase = null;
-private Queue<ShowcaseContainer> mShowcaseQueue = new ArrayDeque<>();
+private MaterialShowcase mCurrentShowcase = null;
+private Queue<MaterialShowcase> mShowcaseQueue = new ArrayDeque<>();
 
 /**
  * Enforces singleton pattern
@@ -33,7 +33,7 @@ public static MaterialShowcaseDisplayer getInstance() {
  * directly
  * @param showcaseContainer the showcase container to be queued and shown
  */
-void enqueue(ShowcaseContainer showcaseContainer) {
+void enqueue(MaterialShowcase showcaseContainer) {
 	mShowcaseQueue.add(showcaseContainer);
 
 	if (mCurrentShowcase == null) {
@@ -45,7 +45,7 @@ private void showNext() {
 	mCurrentShowcase = mShowcaseQueue.poll();
 
 	if (mCurrentShowcase != null) {
-		mCurrentShowcase.showNow();
+		mCurrentShowcase._showNow();
 	}
 }
 
@@ -53,19 +53,12 @@ private void showNext() {
  * Call this whenever a showcase has been dismissed or completed
  * @param showcaseContainer the showcase that has been finished
  */
-void onFinished(ShowcaseContainer showcaseContainer) {
+void onFinished(MaterialShowcase showcaseContainer) {
 	if (showcaseContainer == mCurrentShowcase) {
 		mCurrentShowcase = null;
 		showNext();
 	} else {
 		mShowcaseQueue.remove(showcaseContainer);
 	}
-}
-
-interface ShowcaseContainer {
-	/**
-	 * Show the showcase
-	 */
-	void showNow();
 }
 }

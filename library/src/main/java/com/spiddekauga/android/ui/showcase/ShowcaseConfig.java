@@ -1,6 +1,5 @@
 package com.spiddekauga.android.ui.showcase;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
@@ -87,9 +86,9 @@ public long getDelay() {
 }
 
 /**
- * Delay the showcase for X milliseconds after calling {@link MaterialShowcaseView#show(Activity)}
+ * Delay the showcase for X milliseconds after calling {@link MaterialShowcaseView#show()}
  * @param delayInMillis milliseconds to delay the showcase for after calling {@link
- * MaterialShowcaseView#show(Activity)}
+ * MaterialShowcaseView#show()}
  */
 public void setDelay(long delayInMillis) {
 	mDelay = delayInMillis;
@@ -121,7 +120,7 @@ public int getTitleTextColor() {
 }
 
 /**
- * Set the color of the title text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#text_color_primary}
+ * Set the color of the title text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_primary}
  * @param textColor color of the title text
  */
 public void setTitleTextColor(int textColor) {
@@ -138,7 +137,7 @@ public int getContentTextColor() {
 
 /**
  * Set the color of the content description. By default this is {@link
- * com.spiddekauga.android.ui.showcase.R.color#text_color_secondary}
+ * com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_secondary}
  * @param textColor color of the content description text
  */
 public void setContentTextColor(int textColor) {
@@ -154,7 +153,7 @@ public int getDismissTextColor() {
 }
 
 /**
- * Set the color of the hide text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#text_color_secondary}
+ * Set the color of the hide text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_secondary}
  * @param textColor color of the hide button text
  */
 public void setDismissTextColor(int textColor) {

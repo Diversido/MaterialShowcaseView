@@ -1,12 +1,13 @@
 package com.spiddekauga.android.ui.showcase;
 
 import android.app.Activity;
+import android.support.annotation.NonNull;
 import android.view.View;
 
 import java.util.LinkedList;
 import java.util.Queue;
 
-public class MaterialShowcaseSequence implements DetachedListener, MaterialShowcaseDisplayer.ShowcaseContainer {
+public class MaterialShowcaseSequence implements DetachedListener, MaterialShowcase {
 private static final MaterialShowcaseDisplayer mShowcaseDisplayer = MaterialShowcaseDisplayer.getInstance();
 PrefsGateway mPrefsGateway;
 Queue<MaterialShowcaseView> mShowcaseQueue;
@@ -23,7 +24,7 @@ private MaterialShowcaseView mCurrentShownShowcase;
  */
 public MaterialShowcaseSequence(Activity activity, String sequenceId) {
 	this(activity);
-	singleUse(sequenceId);
+	setSingleUse(sequenceId);
 }
 
 /**
@@ -34,17 +35,6 @@ public MaterialShowcaseSequence(Activity activity) {
 	mActivity = activity;
 	mShowcaseQueue = new LinkedList<>();
 }
-
-/**
- * Set the sequence as single use
- * @param sequenceId unique id of the sequence
- */
-public MaterialShowcaseSequence singleUse(String sequenceId) {
-	mSingleUse = true;
-	mPrefsGateway = new PrefsGateway(mActivity, sequenceId);
-	return this;
-}
-
 
 public MaterialShowcaseSequence addSequenceItem(int contentResId, int dismissTextResId) {
 	return addSequenceItem(mActivity.getString(contentResId), mActivity.getString(dismissTextResId));
@@ -119,8 +109,46 @@ public void show() {
 	}
 }
 
+@Override
+public boolean isSingleUse() {
+	return mSingleUse;
+}
+
+/**
+ * Set the sequence as single use
+ * @param sequenceId unique id of the sequence
+ */
+@Override
+public void setSingleUse(@NonNull String sequenceId) {
+	mSingleUse = true;
+	mPrefsGateway = new PrefsGateway(mActivity, sequenceId);
+}
+
+/**
+ * Used internally, don't call this directly! Instead call {@link #show()}
+ */
+@Override
+public void _showNow() {
+	showNextItem();
+}
+
 public boolean hasFired() {
 	return mPrefsGateway.getSequenceStatus() == PrefsGateway.SEQUENCE_FINISHED;
+}
+
+private void showNextItem() {
+	if (mShowcaseQueue.size() > 0 && !mActivity.isFinishing()) {
+		mCurrentShownShowcase = mShowcaseQueue.remove();
+		mCurrentShownShowcase.setDetachedListener(this);
+		mCurrentShownShowcase._showNow();
+	}
+	// We've reached the end of the sequence, save the fired state
+	else {
+		if (mSingleUse) {
+			mPrefsGateway.setFired();
+		}
+		mShowcaseDisplayer.onFinished(this);
+	}
 }
 
 /**
@@ -164,21 +192,6 @@ public void onShowcaseDetached(MaterialShowcaseView showcaseView, boolean wasDis
 	}
 }
 
-private void showNextItem() {
-	if (mShowcaseQueue.size() > 0 && !mActivity.isFinishing()) {
-		mCurrentShownShowcase = mShowcaseQueue.remove();
-		mCurrentShownShowcase.setDetachedListener(this);
-		mCurrentShownShowcase.showNow(mActivity);
-	}
-	// We've reached the end of the sequence, save the fired state
-	else {
-		if (mSingleUse) {
-			mPrefsGateway.setFired();
-		}
-		mShowcaseDisplayer.onFinished(this);
-	}
-}
-
 /**
  * Set a config to be applied to all subsequent showcases that are added, i.e. calls {@link
  * MaterialShowcaseView#setConfig(ShowcaseConfig)}.
@@ -186,13 +199,5 @@ private void showNextItem() {
  */
 public void setConfig(ShowcaseConfig config) {
 	mConfig = config;
-}
-
-/**
- * Used internally, don't call this directly! Instead call {@link #show()}
- */
-@Override
-public void showNow() {
-	showNextItem();
 }
 }

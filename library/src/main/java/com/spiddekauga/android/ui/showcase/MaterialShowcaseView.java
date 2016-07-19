@@ -61,7 +61,7 @@ import java.util.List;
  * </pre>
  * Nothing in mandatory for the showcase to view
  */
-public class MaterialShowcaseView extends FrameLayout implements View.OnTouchListener, View.OnClickListener, MaterialShowcaseDisplayer.ShowcaseContainer {
+public class MaterialShowcaseView extends FrameLayout implements View.OnTouchListener, View.OnClickListener, MaterialShowcase {
 
 private static final String TAG = MaterialShowcaseView.class.getSimpleName();
 private static final MaterialShowcaseDisplayer mShowcaseDisplayer = MaterialShowcaseDisplayer.getInstance();
@@ -103,7 +103,8 @@ private Activity mActivity = null;
 
 /**
  * Create a bare Material Showcase
- * @param context activity context we want to showNow the showcase in
+ * @param context activity we want to showNow the showcase in
+ * @throws IllegalArgumentException if context isn't an activity
  */
 public MaterialShowcaseView(Context context) {
 	super(context);
@@ -111,6 +112,12 @@ public MaterialShowcaseView(Context context) {
 }
 
 private void init(Context context) {
+	if (context instanceof Activity) {
+		mActivity = (Activity) context;
+	} else {
+		throw new IllegalArgumentException("Context must be an activity");
+	}
+
 	ShowcaseConfig.init(context);
 
 	setWillNotDraw(false);
@@ -142,9 +149,6 @@ private void init(Context context) {
 	mEraser.setColor(0xFFFFFFFF);
 	mEraser.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 	mEraser.setFlags(Paint.ANTI_ALIAS_FLAG);
-	
-	mBackgroundColorPaint = new Paint();
-	mBackgroundColorPaint.setColor(mBackgroundColor);
 }
 
 /**
@@ -162,7 +166,11 @@ public void setDismissBackgroundColor(int backgroundColor) {
 						backgroundColor
 				}
 		);
-		ViewCompat.setBackgroundTintList(mDismissButton, colorStateList);
+		if (Build.VERSION.SDK_INT >= 20) {
+			mDismissButton.setSupportBackgroundTintList(colorStateList);
+		} else {
+			ViewCompat.setBackgroundTintList(mDismissButton, colorStateList);
+		}
 	}
 }
 
@@ -175,7 +183,6 @@ public MaterialShowcaseView(Context context, AttributeSet attrs, int defStyleAtt
 	super(context, attrs, defStyleAttr);
 	init(context);
 }
-
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public MaterialShowcaseView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
@@ -198,6 +205,25 @@ public static void resetSingleUse(Context context, String showcaseId) {
  */
 public static void resetAll(Context context) {
 	PrefsGateway.resetAll(context);
+}
+
+/**
+ * Static helper to check if a showcase has been fired or not
+ * @param context application context
+ * @param showcaseId the showcase to check if it has been fired or not
+ * @return true if the showcase has been fired, false otherwise
+ */
+public static boolean hasFired(Context context, String showcaseId) {
+	return PrefsGateway.hasFired(context, showcaseId);
+}
+
+/**
+ * Static helper method for setting a showcase as fired.
+ * @param context application context
+ * @param showcaseId showcase id to set as fired
+ */
+public static void setFired(Context context, String showcaseId) {
+	PrefsGateway.setFired(context, showcaseId);
 }
 
 /**
@@ -247,7 +273,7 @@ protected void onDraw(Canvas canvas) {
 	// save our 'old' dimensions
 	mOldWidth = width;
 	mOldHeight = height;
-	
+
 	updateAnimations();
 	drawShapes(canvas);
 }
@@ -328,6 +354,11 @@ private void drawShapes(Canvas canvas) {
 	if (mCanvas != null) {
 		// Clear canvas
 		mCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+
+		if (mBackgroundColorPaint == null) {
+			mBackgroundColorPaint = new Paint();
+			mBackgroundColorPaint.setColor(mBackgroundColor);
+		}
 
 		// draw background circle
 		mBackgroundShape.draw(mCanvas, mBackgroundColorPaint);
@@ -664,8 +695,8 @@ private void notifyOnTargetPressed() {
 }
 
 /**
- * Create a circular hide animation. Will shrink the background, and target circle if available,
- * and then hide it
+ * Create a circular hide animation. Will shrink the background, and target circle if available, and
+ * then hide it
  */
 private void animateDismiss() {
 	long hideTime = ShowcaseConfig.ANIMATION_HIDE_TIME;
@@ -831,9 +862,9 @@ public void setConfig(ShowcaseConfig config) {
 }
 
 /**
- * Delay the showcase for X milliseconds after calling {@link #show(Activity)}
+ * Delay the showcase for X milliseconds after calling {@link #show()}
  * @param delayInMillis milliseconds to delay the showcase for after calling {@link
- * #show(Activity)}
+ * #show()}
  */
 public void setDelay(long delayInMillis) {
 	mDelayInMillis = delayInMillis;
@@ -841,7 +872,7 @@ public void setDelay(long delayInMillis) {
 
 /**
  * Set the color of the content description. By default this is {@link
- * com.spiddekauga.android.ui.showcase.R.color#text_color_secondary}
+ * com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_secondary}
  * @param textColor color of the content description text
  */
 public void setContentTextColor(int textColor) {
@@ -851,7 +882,7 @@ public void setContentTextColor(int textColor) {
 }
 
 /**
- * Set the color of the hide text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#text_color_secondary}
+ * Set the color of the hide text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_secondary}
  * @param textColor color of the hide button text
  */
 public void setDismissTextColor(int textColor) {
@@ -861,7 +892,7 @@ public void setDismissTextColor(int textColor) {
 }
 
 /**
- * Set the color of the title text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#text_color_primary}
+ * Set the color of the title text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_primary}
  * @param textColor color of the title text
  */
 private void setTitleTextColor(int textColor) {
@@ -887,13 +918,25 @@ public void addListener(ShowcaseListener listener) {
 }
 
 /**
- * If this showcase is a single use, check if it has fired.
- * @return true if this single use showcase has fired, always returns false if this showcase isn't
- * set as single use.
- * @see #setSingleUse(String) to set the showcase as single use
+ * Reveal the showcase view.
  */
-public boolean hasFired() {
-	return mPrefsGateway != null && mPrefsGateway.hasFired();
+public void show() {
+	// if we're in single use mode and have already shot our bolt then do nothing
+	if (mSingleUse) {
+		if (mPrefsGateway.hasFired()) {
+			notifyOnSkipped();
+			return;
+		} else {
+			mPrefsGateway.setFired();
+		}
+	}
+
+	mShowcaseDisplayer.enqueue(this);
+}
+
+@Override
+public boolean isSingleUse() {
+	return mSingleUse;
 }
 
 /**
@@ -908,75 +951,10 @@ public void setSingleUse(@NonNull String showcaseId) {
 }
 
 /**
- * Reveal the showcase view.
- * @param activity the mActivity to showNow the showcase in
- * @return true if the showcase was shown
- */
-public boolean show(final Activity activity) {
-	mActivity = activity;
-
-	// if we're in single use mode and have already shot our bolt then do nothing
-	if (mSingleUse) {
-		if (mPrefsGateway.hasFired()) {
-			notifyOnSkipped();
-			return false;
-		} else {
-			mPrefsGateway.setFired();
-		}
-	}
-
-	mShowcaseDisplayer.enqueue(this);
-
-	return true;
-}
-
-/**
- * Notify when {@link #setSingleUse(String)} is enabled and showcase has been fired before
- * @see #setSingleUse(String)
- */
-private void notifyOnSkipped() {
-	for (ShowcaseListener listener : mListeners) {
-		listener.onShowcaseSkipped(this);
-	}
-	mListeners.clear();
-
-	// internal listener used by sequence for storing progress within the sequence
-	if (mDetachedListener != null) {
-		mDetachedListener.onShowcaseDetached(this, mWasDismissed);
-		mDetachedListener = null;
-	}
-}
-
-/**
- * Set content box layout params
- * @param gravity gravity of the content box
- * @param bottomMargin bottom margin (usually from the target)
- * @param topMargin top margin (usually from target)
- */
-private void applyLayoutParams(int gravity, int bottomMargin, int topMargin) {
-
-}
-
-/**
- * Reset this showcase so that it can be shown again. Only has an effect if this is a single use
- * showcase, i.e. that {@link #setSingleUse(String)} has been called.
- */
-public void resetSingleUse() {
-	if (mSingleUse && mPrefsGateway != null) {
-		mPrefsGateway.resetShowcase();
-	}
-}
-
-void showNow(Activity activity) {
-	mActivity = activity;
-	showNow();
-}
-
-/**
- * Used internally, don't call this directly! Instead call {@link #show(Activity)}
+ * Used internally, don't call this directly! Instead call {@link #show()}
  */
 @Override
-public void showNow() {
+public void _showNow() {
 	if (mActivity != null) {
 		mHandler = new Handler();
 		mHandler.postDelayed(new Runnable() {
@@ -993,6 +971,16 @@ public void showNow() {
 	} else {
 		mShowcaseDisplayer.onFinished(this);
 	}
+}
+
+/**
+ * If this showcase is a single use, check if it has fired.
+ * @return true if this single use showcase has fired, always returns false if this showcase isn't
+ * set as single use.
+ * @see #setSingleUse(String) to set the showcase as single use
+ */
+public boolean hasFired() {
+	return mPrefsGateway != null && mPrefsGateway.hasFired();
 }
 
 private void hideEmptyViews() {
@@ -1078,6 +1066,33 @@ private static int getSoftButtonsBarHorizontalSizePort(Activity activity) {
 
 private void setShouldRender(boolean shouldRender) {
 	mShouldRender = shouldRender;
+}
+
+/**
+ * Notify when {@link #setSingleUse(String)} is enabled and showcase has been fired before
+ * @see #setSingleUse(String)
+ */
+private void notifyOnSkipped() {
+	for (ShowcaseListener listener : mListeners) {
+		listener.onShowcaseSkipped(this);
+	}
+	mListeners.clear();
+
+	// internal listener used by sequence for storing progress within the sequence
+	if (mDetachedListener != null) {
+		mDetachedListener.onShowcaseDetached(this, mWasDismissed);
+		mDetachedListener = null;
+	}
+}
+
+/**
+ * Reset this showcase so that it can be shown again. Only has an effect if this is a single use
+ * showcase, i.e. that {@link #setSingleUse(String)} has been called.
+ */
+public void resetSingleUse() {
+	if (mSingleUse && mPrefsGateway != null) {
+		mPrefsGateway.resetShowcase();
+	}
 }
 
 private enum AnimationStates {
@@ -1206,7 +1221,7 @@ public static class Builder {
 	}
 
 	/**
-	 * Set the color of the title text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#text_color_primary}
+	 * Set the color of the title text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_primary}
 	 * @param textColor color of the title text
 	 */
 	public Builder setTitleTextColor(int textColor) {
@@ -1216,7 +1231,7 @@ public static class Builder {
 
 	/**
 	 * Set the color of the content description. By default this is {@link
-	 * com.spiddekauga.android.ui.showcase.R.color#text_color_secondary}
+	 * com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_secondary}
 	 * @param textColor color of the content description text
 	 */
 	public Builder setContentTextColor(int textColor) {
@@ -1225,7 +1240,7 @@ public static class Builder {
 	}
 
 	/**
-	 * Set the color of the hide text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#text_color_secondary}
+	 * Set the color of the hide text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_secondary}
 	 * @param textColor color of the hide button text
 	 */
 	public Builder setDismissTextColor(int textColor) {
@@ -1244,9 +1259,9 @@ public static class Builder {
 	}
 
 	/**
-	 * Delay the showcase for X milliseconds after calling {@link #show(Activity)}
+	 * Delay the showcase for X milliseconds after calling {@link #show()}
 	 * @param delayInMillis milliseconds to delay the showcase for after calling {@link
-	 * #show(Activity)}
+	 * #show()}
 	 */
 	public Builder setDelay(int delayInMillis) {
 		mShowcaseView.setDelay(delayInMillis);
@@ -1286,7 +1301,7 @@ public static class Builder {
 	 * @return created showcase view
 	 */
 	public MaterialShowcaseView show() {
-		build().show(mActivity);
+		build().show();
 		return mShowcaseView;
 	}
 

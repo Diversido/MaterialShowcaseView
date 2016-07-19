@@ -3,6 +3,6 @@
 	<!-- NOTE! Showcase background opacity should be 96% or F5 — from Material design document -->
 	<color name="material_showcase_background">#F500B0FF</color>
 	<color name="material_showcase_dismiss_background">#FF4081</color>
-	<color name="text_color_primary">#FFFFFFFF</color>
-	<color name="text_color_secondary">#82FFFFFF</color>
+	<color name="material_showcase_text_primary">#FFFFFFFF</color>
+	<color name="material_showcase_text_secondary">#82FFFFFF</color>
 </resources>
