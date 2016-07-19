@@ -7,7 +7,7 @@ I found the [former library][6] good, but I wanted to streamline the library and
 least some of the Material design guidelines — namely [onboarding][8] and [feature discovery][7]. Therefor
 it is only possible to create fullscreen and target showcases where the target always should be an icon.
 
-![Target][9] ![Fullscreen][10] ![Sequence][11]
+![Animation][9] ![Fullscreen][10] ![Sequence][11]
 
 # Gradle
 --------
@@ -166,6 +166,6 @@ Publishing libraries to Maven is a chore that takes time and effort. Jitpack.io 
 [6]: https://github.com/deano2390/MaterialShowcaseView
 [7]: https://material.google.com/growth-communications/feature-discovery.html
 [8]: https://material.google.com/growth-communications/onboarding.html
-[9]: http://imgur.com/l5mwSOl
-[10]: http://imgur.com/CnUDfSH
-[11]: http://imgur.com/LBKCob3
+[9]: http://imgur.com/l5mwSOl.gif
+[10]: http://imgur.com/CnUDfSH.gif
+[11]: http://imgur.com/LBKCob3.gif
