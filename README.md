@@ -1,14 +1,13 @@
 # MaterialShowcaseView
 A Material Design themed ShowcaseView for Android
 
-This library is heavily inspired by the original [ShowcaseView library][1].
+This library has been forked from [deano2390][6] which in turn is heavily inspired by the original [ShowcaseView library][1].
 
-Since Google introduced the Material design philosophy I have seen quite a few apps with a nice clean, flat showcase view (the Youtube app is a good example). The only library out there however is the [original one][1]. This was a great library for a long time but the theming is now looking a bit dated.
+I found the [former library][6] good, but I wanted to streamline the library and force users to follow at
+least some of the Material design guidelines — namely [onboarding][8] and [feature discovery][7]. Therefor
+it is only possible to create fullscreen and target showcases where the target always should be an icon.
 
-![Logo](http://i.imgur.com/QIMYRJh.png)
-
-
-![Animation][2]
+![Target][9] ![Fullscreen][10] ![Sequence][11]
 
 # Gradle
 --------
@@ -31,61 +30,120 @@ Then add the dependency to your module's build.gradle:
 
 /app/build.gradle
 ```groovy
-compile 'com.github.deano2390:MaterialShowcaseView:1.1.0'
+compile 'com.github.spiddekauga:MaterialShowcaseView:2.0.0'
 ```
 
 NOTE: Some people have mentioned that they needed to add the @aar suffix to get it to resolve from JitPack:
 ```groovy
-compile 'com.github.deano2390:MaterialShowcaseView:1.1.0@aar'
+compile 'com.github.spiddekauga:MaterialShowcaseView:2.0.0@aar'
 ```
 
 # How to use
 --------
-This is the basic usage of a single showcase view, you should check out the sample app for more advanced usage.
+Below are some simple examples. You can check out the samples for advanced examples and the API for more settings.
+Only one showcase can ever be viewed at the same time, the rest of the showcases are queued.
+
+## Target
+--------
+To create a circle around a target you only have to supply a target
 
 ```java
-
-	// single example
+	// Target example
 	new MaterialShowcaseView.Builder(this)
-                .setTarget(mButtonShow)
-                .setDismissText("GOT IT")
-                .setContentText("This is some amazing feature you should know about")
-                .setDelay(withDelay) // optional but starting animations immediately in onCreate can make them choppy
-                .singleUse(SHOWCASE_ID) // provide a unique ID used to ensure it is only shown once
-                .show();
-                
-                
-                
-                
-    	// sequence example            
-    	ShowcaseConfig config = new ShowcaseConfig();
-        config.setDelay(500); // half second between each showcase view
+			.setTarget(mFAB) // <-- Make this a target showcase
+			.setTitleText("Optional title")
+			.setContentText("Optional content text")
+			.setDismissText("got it") // Optional. When used can only dismiss the showcase by clicking on the dismiss button and target isn't pressable.
+			.setSingleUse(SHOWCASE_ID) // Provide a unique ID to ensure it is only shown once
+			.setDelay(500) // Optional. But starting animations immediately in onCreate can make the choppy
+			.show();
 
-        MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(this, SHOWCASE_ID);
+	// You can also use a config to set default values to use for multiple showcases
+	ShowcaseConfig config = new ShowcaseConfig();
+	config.setDelay(500);
+	new MaterialShowcaseView.Builder(this)
+			.setConfig(config)
+			.setTarget(mFAB)
+			// ...
+```
+Note: The inner circle for the target is always 88dp as this is the metrics provided by Google. Target button should not be larger than 55dp.
 
-        sequence.setConfig(config);
+## Fullscreen
+-------------
+Fullscreen showcases are created by NOT supplying a target
 
-        sequence.addSequenceItem(mButtonOne,
-                "This is button one", "GOT IT");
+```java
+	// Fullscreen
+	new MaterialShowcaseView.Builder(this)
+			.setTitleText("Optional title")
+			.setContentText("Optional content text")
+			.setDismissText("got it") // Optional. When used can only dismiss the showcase by clicking on the dismiss button and target isn't pressable.
+			.setSingleUse(SHOWCASE_ID) // Provide a unique ID to ensure it is only shown once
+			.setDelay(500) // Optional. But starting animations immediately in onCreate can make the choppy
+			.show();
 
-        sequence.addSequenceItem(mButtonTwo,
-                "This is button two", "GOT IT");
+	// You can also use a config to set default values to use for multiple showcases
+	ShowcaseConfig config = new ShowcaseConfig();
+	config.setDelay(500);
+	new MaterialShowcaseView.Builder(this)
+			.setConfig(config)
+			// ...
+```
 
-        sequence.addSequenceItem(mButtonThree,
-                "This is button three", "GOT IT");
+## Sequence
+-----------
+There are two possible ways to create a sequence. As showcases there can only be one showcase visible at the same time showcases are
+automatically queued when calling show().
+```java
+	// You can use a config to easy set common settings for each showcase
+	ShowcaseConfig config = new ShowcaseConfig(this);
+	config.setDelay(0);
 
-        sequence.start();
-                
+	MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(this, SHOWCASE_ID);
+	sequence.setConfig(config);
+
+	// 1
+	sequence.addSequenceItem(
+			new MaterialShowcaseView.Builder(this)
+					.setTarget(mTopButton)
+					.setTitleText("Press button")
+					.setContentText("You can click on the target if you don't call setTargetTouchable(false) or set a hide text")
+					.build()
+	);
+
+
+	// We update the config so that there is half second delay between each showcase view
+	config.setDelay(500);
+
+	// 2
+	sequence.addSequenceItem(mBottomRightButton, "Click outside to hide", "Click outside the area hide", null);
+
+	// 3
+	sequence.addSequenceItem(
+			new MaterialShowcaseView.Builder(this)
+					.setDismissText("got it")
+					.setTitleText("Fullscreen showcase")
+					.setContentText("You can use both fullsceen and target showcases in your sequence :)")
+					.build()
+	);
+
+	sequence.show();
+
+	// 4 - Not part of the sequence but queued anyway
+	new MaterialShowcaseView.Builder(this)
+			.setTitleText("Automatically queued")
+			.setContentText("Calling show() on while a sequence or showcase is active will queue the showcase")
+			.show();
 ```
 
 # Why Jitpack
 ------------
 Publishing libraries to Maven is a chore that takes time and effort. Jitpack.io allows me to release without ever leaving GitHub so I can release easily and more often.
 
-
 # License
 -------
 
+    Copyright 2016 Spiddekauga Games AB
     Copyright 2015 Dean Wild
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -102,10 +160,12 @@ Publishing libraries to Maven is a chore that takes time and effort. Jitpack.io 
 
 
 
-
-
 [1]: https://github.com/amlcurran/ShowcaseView
-[2]: http://i.imgur.com/rFHENgz.gif
-[3]: https://code.google.com/p/android-flowtextview/
-[4]: https://img.shields.io/github/release/deano2390/MaterialShowcaseView.svg?label=JitPack
-[5]: https://jitpack.io/#deano2390/MaterialShowcaseView
+[4]: https://img.shields.io/github/release/spiddekauga/MaterialShowcaseView.svg?label=JitPack
+[5]: https://jitpack.io/#spiddekauga/MaterialShowcaseView
+[6]: https://github.com/deano2390/MaterialShowcaseView
+[7]: https://material.google.com/growth-communications/feature-discovery.html
+[8]: https://material.google.com/growth-communications/onboarding.html
+[9]: http://imgur.com/l5mwSOl
+[10]: http://imgur.com/CnUDfSH
+[11]: http://imgur.com/LBKCob3
