@@ -2,6 +2,7 @@ package com.spiddekauga.android.ui.materialshowcaseviewsample;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -28,6 +29,8 @@ protected void onCreate(Bundle savedInstanceState) {
 	button.setOnClickListener(this);
 	button = (Button) findViewById(R.id.show_target_button);
 	button.setOnClickListener(this);
+	button = (Button) findViewById(R.id.popup_button);
+	button.setOnClickListener(this);
 	button = (Button) findViewById(R.id.reset_button);
 	button.setOnClickListener(this);
 
@@ -45,6 +48,8 @@ public void onClick(View v) {
 		presentShowcaseCenter();
 	} else if (v.getId() == R.id.show_target_button) {
 		presentShowcaseTargetPressable();
+	} else if (v.getId() == R.id.popup_button) {
+		presentPopup();
 	} else if (v.getId() == R.id.corner_button) {
 		Toast.makeText(this, "Pressed corner button", Toast.LENGTH_SHORT).show();
 	} else if (v.getId() == R.id.center_button) {
@@ -87,5 +92,23 @@ private void presentShowcaseTargetPressable() {
 			.setDelay(0) // optional but starting animations immediately in onCreate can make them choppy
 			.setSingleUse(SHOWCASE_TARGET_PRESSABLE_ID) // provide a unique ID used to ensure it is only shown once
 			.show();
+}
+
+private void presentPopup() {
+	AlertDialog dialog = new AlertDialog.Builder(this)
+			.setTitle("Title")
+			.setMessage("Display target over things")
+			.setPositiveButton("Yes", null)
+			.setNegativeButton("Cancel", null)
+			.setIcon(android.R.drawable.ic_dialog_alert)
+			.show();
+
+	Button button = (Button) dialog.findViewById(android.R.id.button1);
+	new MaterialShowcaseView.Builder(this)
+			.setTarget(button)
+			.setTitleText("Showcase around a popup button")
+			.setDelay(500)
+			.show();
+
 }
 }

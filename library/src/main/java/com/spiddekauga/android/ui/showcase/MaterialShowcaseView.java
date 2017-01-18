@@ -46,10 +46,12 @@ import java.util.List;
  * new MaterialShowcaseView.Builder(this)
  * 	.setTarget(buttonView) // Show circle around target
  * 	.setTitleText("This is my title")
- * 	.setSingleUse(idOfTheShowcaseToOnlyBeShownOnce) // Set if you only want to show the showcase once
+ * 	.setSingleUse(idOfTheShowcaseToOnlyBeShownOnce) // Set if you only want to show the showcase
+ * once
  * 	.setContentText("Some text describing the feature")
  * 	.setDelay(0) // Set it to at least 300ms if your showcase calls show() in onCreate()
- * 	.setDismissText("Got it") // Will always be CAPITALIZED - When set user must click on it to continue
+ * 	.setDismissText("Got it") // Will always be CAPITALIZED - When set user must click on it to
+ * continue
  * 	.setBackgroundColor(Color.RED) // You can also override R.color.material_showcase_background
  * 	.setTitleTextColor(Color.GREEN) // Default is R.color.text_color_primary
  * 	.setContentTextColor(Color.GREEN) // Default is R.color.text_color_secondary
@@ -607,9 +609,9 @@ protected void onDetachedFromWindow() {
 
 private void notifyOnDismissed() {
 	for (ShowcaseListener listener : mListeners) {
-			listener.onShowcaseDismissed(this);
-		}
-		mListeners.clear();
+		listener.onShowcaseDismissed(this);
+	}
+	mListeners.clear();
 
 	// internal listener used by sequence for storing progress within the sequence
 	if (mDetachedListener != null) {
@@ -863,8 +865,7 @@ public void setConfig(ShowcaseConfig config) {
 
 /**
  * Delay the showcase for X milliseconds after calling {@link #show()}
- * @param delayInMillis milliseconds to delay the showcase for after calling {@link
- * #show()}
+ * @param delayInMillis milliseconds to delay the showcase for after calling {@link #show()}
  */
 public void setDelay(long delayInMillis) {
 	mDelayInMillis = delayInMillis;
@@ -961,6 +962,7 @@ public void _showNow() {
 			@Override
 			public void run() {
 				((ViewGroup) mActivity.getWindow().getDecorView()).addView(MaterialShowcaseView.this);
+				bringToFront();
 
 				hideEmptyViews();
 				fixNavBarMargin();
@@ -1103,8 +1105,7 @@ private enum AnimationStates {
 }
 
 /**
- * Gives us a builder utility class with a fluent API for eaily configuring showcase
- * views
+ * Gives us a builder utility class with a fluent API for eaily configuring showcase views
  */
 public static class Builder {
 	final MaterialShowcaseView mShowcaseView;
@@ -1200,7 +1201,8 @@ public static class Builder {
 
 	/**
 	 * Set whether or not the target view can be touched while the showcase is visible.
-	 * @param targetTouchable true if the target should be touchable while the showcase is visible. True by default.
+	 * @param targetTouchable true if the target should be touchable while the showcase is visible.
+	 * True by default.
 	 */
 	public Builder setTargetTouchable(boolean targetTouchable) {
 		mShowcaseView.setTargetTouchable(targetTouchable);
@@ -1208,7 +1210,8 @@ public static class Builder {
 	}
 
 	/**
-	 * Set properties based on a config object. Will only set those attributes that have been set in the config.
+	 * Set properties based on a config object. Will only set those attributes that have been set in
+	 * the config.
 	 * @param config set properties based from a configuration
 	 */
 	public void setConfig(ShowcaseConfig config) {
@@ -1260,8 +1263,7 @@ public static class Builder {
 
 	/**
 	 * Delay the showcase for X milliseconds after calling {@link #show()}
-	 * @param delayInMillis milliseconds to delay the showcase for after calling {@link
-	 * #show()}
+	 * @param delayInMillis milliseconds to delay the showcase for after calling {@link #show()}
 	 */
 	public Builder setDelay(int delayInMillis) {
 		mShowcaseView.setDelay(delayInMillis);
