@@ -1,4 +1,4 @@
-package com.spiddekauga.android.ui.showcase;
+package io.blushine.android.ui.showcase;
 
 /**
  * Circular animation for a circle shape

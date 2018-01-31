@@ -1,4 +1,4 @@
-package com.spiddekauga.android.ui.showcase;
+package io.blushine.android.ui.showcase;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -70,7 +70,7 @@ public int getDismissBackgroundColor() {
 
 /**
  * Set the background color of the hide button. By default this is {@link
- * com.spiddekauga.android.ui.showcase.R.color#material_showcase_dismiss_background}
+ * io.blushine.android.ui.showcase.R.color#material_showcase_dismiss_background}
  * @param backgroundColor background color of the hide button
  */
 public void setDismissBackgroundColor(int backgroundColor) {
@@ -120,7 +120,7 @@ public int getTitleTextColor() {
 }
 
 /**
- * Set the color of the title text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_primary}
+ * Set the color of the title text. By default this is {@link io.blushine.android.ui.showcase.R.color#material_showcase_text_primary}
  * @param textColor color of the title text
  */
 public void setTitleTextColor(int textColor) {
@@ -137,7 +137,7 @@ public int getContentTextColor() {
 
 /**
  * Set the color of the content description. By default this is {@link
- * com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_secondary}
+ * io.blushine.android.ui.showcase.R.color#material_showcase_text_secondary}
  * @param textColor color of the content description text
  */
 public void setContentTextColor(int textColor) {
@@ -153,7 +153,7 @@ public int getDismissTextColor() {
 }
 
 /**
- * Set the color of the hide text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_secondary}
+ * Set the color of the hide text. By default this is {@link io.blushine.android.ui.showcase.R.color#material_showcase_text_secondary}
  * @param textColor color of the hide button text
  */
 public void setDismissTextColor(int textColor) {

@@ -1,10 +1,10 @@
-package com.spiddekauga.android.ui.showcase;
+package io.blushine.android.ui.showcase;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
 
-import com.spiddekauga.android.ui.showcase.target.Target;
+import io.blushine.android.ui.showcase.target.Target;
 
 /**
  * Circular shape for target.

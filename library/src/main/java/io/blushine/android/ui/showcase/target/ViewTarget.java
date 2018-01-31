@@ -1,4 +1,4 @@
-package com.spiddekauga.android.ui.showcase.target;
+package io.blushine.android.ui.showcase.target;
 
 import android.app.Activity;
 import android.graphics.Point;

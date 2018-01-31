@@ -1,4 +1,4 @@
-package com.spiddekauga.android.ui.showcase;
+package io.blushine.android.ui.showcase;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -32,11 +32,11 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.spiddekauga.android.ui.showcase.target.Target;
-import com.spiddekauga.android.ui.showcase.target.ViewTarget;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import io.blushine.android.ui.showcase.target.Target;
+import io.blushine.android.ui.showcase.target.ViewTarget;
 
 /**
  * Show a Material showcase. Preferably use the {@link Builder} to create instances of {@link
@@ -155,7 +155,7 @@ private void init(Context context) {
 
 /**
  * Set the background color of the hide button. By default this is {@link
- * com.spiddekauga.android.ui.showcase.R.color#material_showcase_dismiss_background}
+ * io.blushine.android.ui.showcase.R.color#material_showcase_dismiss_background}
  * @param backgroundColor background color of the hide button
  */
 public void setDismissBackgroundColor(int backgroundColor) {
@@ -873,7 +873,7 @@ public void setDelay(long delayInMillis) {
 
 /**
  * Set the color of the content description. By default this is {@link
- * com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_secondary}
+ * io.blushine.android.ui.showcase.R.color#material_showcase_text_secondary}
  * @param textColor color of the content description text
  */
 public void setContentTextColor(int textColor) {
@@ -883,7 +883,7 @@ public void setContentTextColor(int textColor) {
 }
 
 /**
- * Set the color of the hide text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_secondary}
+ * Set the color of the hide text. By default this is {@link io.blushine.android.ui.showcase.R.color#material_showcase_text_secondary}
  * @param textColor color of the hide button text
  */
 public void setDismissTextColor(int textColor) {
@@ -893,7 +893,7 @@ public void setDismissTextColor(int textColor) {
 }
 
 /**
- * Set the color of the title text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_primary}
+ * Set the color of the title text. By default this is {@link io.blushine.android.ui.showcase.R.color#material_showcase_text_primary}
  * @param textColor color of the title text
  */
 private void setTitleTextColor(int textColor) {
@@ -1224,7 +1224,7 @@ public static class Builder {
 	}
 
 	/**
-	 * Set the color of the title text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_primary}
+	 * Set the color of the title text. By default this is {@link io.blushine.android.ui.showcase.R.color#material_showcase_text_primary}
 	 * @param textColor color of the title text
 	 */
 	public Builder setTitleTextColor(int textColor) {
@@ -1234,7 +1234,7 @@ public static class Builder {
 
 	/**
 	 * Set the color of the content description. By default this is {@link
-	 * com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_secondary}
+	 * io.blushine.android.ui.showcase.R.color#material_showcase_text_secondary}
 	 * @param textColor color of the content description text
 	 */
 	public Builder setContentTextColor(int textColor) {
@@ -1243,7 +1243,7 @@ public static class Builder {
 	}
 
 	/**
-	 * Set the color of the hide text. By default this is {@link com.spiddekauga.android.ui.showcase.R.color#material_showcase_text_secondary}
+	 * Set the color of the hide text. By default this is {@link io.blushine.android.ui.showcase.R.color#material_showcase_text_secondary}
 	 * @param textColor color of the hide button text
 	 */
 	public Builder setDismissTextColor(int textColor) {
@@ -1253,7 +1253,7 @@ public static class Builder {
 
 	/**
 	 * Set the background color of the hide button. By default this is {@link
-	 * com.spiddekauga.android.ui.showcase.R.color#material_showcase_dismiss_background}
+	 * io.blushine.android.ui.showcase.R.color#material_showcase_dismiss_background}
 	 * @param backgroundColor background color of the hide button
 	 */
 	public Builder setDismissBackgroundColor(int backgroundColor) {

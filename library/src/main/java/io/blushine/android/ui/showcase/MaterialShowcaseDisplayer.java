@@ -1,4 +1,4 @@
-package com.spiddekauga.android.ui.showcase;
+package io.blushine.android.ui.showcase;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
