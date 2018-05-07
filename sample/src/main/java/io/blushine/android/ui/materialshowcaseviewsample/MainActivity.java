@@ -1,4 +1,4 @@
-package com.spiddekauga.android.ui.materialshowcaseviewsample;
+package io.blushine.android.ui.materialshowcaseviewsample;
 
 
 import android.content.Intent;
@@ -8,7 +8,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.spiddekauga.android.ui.showcase.MaterialShowcaseView;
+import io.blushine.android.ui.showcase.MaterialShowcaseView;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 

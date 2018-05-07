@@ -1,4 +1,4 @@
-package com.spiddekauga.android.ui.materialshowcaseviewsample;
+package io.blushine.android.ui.materialshowcaseviewsample;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.spiddekauga.android.ui.showcase.MaterialShowcaseView;
+import io.blushine.android.ui.showcase.MaterialShowcaseView;
 
 public class FullscreenExample extends AppCompatActivity implements View.OnClickListener {
 

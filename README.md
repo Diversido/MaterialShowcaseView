@@ -30,12 +30,12 @@ Then add the dependency to your module's build.gradle:
 
 /app/build.gradle
 ```groovy
-compile 'com.github.spiddekauga:MaterialShowcaseView:2.0.0'
+compile 'com.github.BlushineIO:MaterialShowcaseView:2.1.0'
 ```
 
 NOTE: Some people have mentioned that they needed to add the @aar suffix to get it to resolve from JitPack:
 ```groovy
-compile 'com.github.spiddekauga:MaterialShowcaseView:2.0.0@aar'
+compile 'com.github.BlushineIO:MaterialShowcaseView:2.1.0@aar'
 ```
 
 # How to use
@@ -143,7 +143,7 @@ Publishing libraries to Maven is a chore that takes time and effort. Jitpack.io 
 # License
 -------
 
-    Copyright 2016 Spiddekauga Games AB
+    Copyright 2016-2018 Spiddekauga Games AB
     Copyright 2015 Dean Wild
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -162,7 +162,7 @@ Publishing libraries to Maven is a chore that takes time and effort. Jitpack.io 
 
 [1]: https://github.com/amlcurran/ShowcaseView
 [4]: https://img.shields.io/github/release/spiddekauga/MaterialShowcaseView.svg?label=JitPack
-[5]: https://jitpack.io/#spiddekauga/MaterialShowcaseView
+[5]: https://jitpack.io/#BlushineIO/MaterialShowcaseView
 [6]: https://github.com/deano2390/MaterialShowcaseView
 [7]: https://material.google.com/growth-communications/feature-discovery.html
 [8]: https://material.google.com/growth-communications/onboarding.html

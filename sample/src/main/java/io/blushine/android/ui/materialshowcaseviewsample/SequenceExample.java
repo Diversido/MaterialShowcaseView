@@ -1,4 +1,4 @@
-package com.spiddekauga.android.ui.materialshowcaseviewsample;
+package io.blushine.android.ui.materialshowcaseviewsample;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -7,9 +7,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.spiddekauga.android.ui.showcase.MaterialShowcaseSequence;
-import com.spiddekauga.android.ui.showcase.MaterialShowcaseView;
-import com.spiddekauga.android.ui.showcase.ShowcaseConfig;
+import io.blushine.android.ui.showcase.MaterialShowcaseSequence;
+import io.blushine.android.ui.showcase.MaterialShowcaseView;
+import io.blushine.android.ui.showcase.ShowcaseConfig;
 
 
 public class SequenceExample extends AppCompatActivity implements View.OnClickListener {
