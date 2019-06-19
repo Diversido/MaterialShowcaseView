@@ -13,6 +13,7 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -902,6 +903,18 @@ private void setTitleTextColor(int textColor) {
 	}
 }
 
+private void setTitleTypeface(Typeface tf, int style) {
+	if (mTitleTextView != null) {
+		mTitleTextView.setTypeface(tf, style);
+	}
+}
+
+private void setContentTypeface(Typeface tf, int style) {
+	if (mTitleTextView != null) {
+		mContentTextView.setTypeface(tf, style);
+	}
+}
+
 /**
  * Render above the navigation bar. Only has some effect in Lollipop or above.
  * @param renderOverNav true to render above the navigation bar
@@ -1296,6 +1309,16 @@ public static class Builder {
 	public Builder renderOverNavigationBar() {
 		mShowcaseView.setRenderOverNavigationBar(true);
 		return this;
+	}
+
+	public Builder setTitleTypeface(Typeface tf, int style) {
+		mShowcaseView.setTitleTypeface(tf, style);
+		return  this;
+	}
+
+	public Builder setContentTypeface(Typeface tf, int style) {
+		mShowcaseView.setContentTypeface(tf, style);
+		return  this;
 	}
 
 	/**
