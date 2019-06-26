@@ -802,7 +802,7 @@ public void setDismissText(@StringRes int resId) {
  */
 public void setDismissText(CharSequence text) {
 	if (mDismissButton != null) {
-		mDismissButton.setText(text.toString().toUpperCase());
+		mDismissButton.setText(text.toString());
 	}
 }
 
@@ -910,10 +910,24 @@ private void setTitleTypeface(Typeface tf, int style) {
 }
 
 private void setContentTypeface(Typeface tf, int style) {
-	if (mTitleTextView != null) {
+	if (mContentTextView != null) {
 		mContentTextView.setTypeface(tf, style);
 	}
 }
+
+private void setDismissTypeface(Typeface tf, int style) {
+	if (mDismissButton != null) {
+		mDismissButton.setTypeface(tf, style);
+	}
+}
+
+private void setDismissButtonAllCaps(boolean allCaps) {
+	if (mDismissButton != null) {
+		mDismissButton.setAllCaps(false);
+	}
+}
+
+
 
 /**
  * Render above the navigation bar. Only has some effect in Lollipop or above.
@@ -1318,6 +1332,16 @@ public static class Builder {
 
 	public Builder setContentTypeface(Typeface tf, int style) {
 		mShowcaseView.setContentTypeface(tf, style);
+		return  this;
+	}
+
+	public Builder setDismissTypeface(Typeface tf, int style) {
+		mShowcaseView.setDismissTypeface(tf, style);
+		return  this;
+	}
+
+	public Builder setDismissButtonAllCaps(boolean allCaps) {
+		mShowcaseView.setDismissButtonAllCaps(allCaps);
 		return  this;
 	}
 
