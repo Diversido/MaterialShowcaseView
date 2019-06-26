@@ -3,6 +3,6 @@
 	<dimen name="material_showcase_content_padding_start_end">40dp</dimen>
 	<dimen name="material_showcase_content_padding_top_bottom">20dp</dimen>
 	<dimen name="material_showcase_target_near_border">88dp</dimen>
-	<dimen name="material_showcase_target_radius">37dp</dimen>
+	<dimen name="material_showcase_target_radius">34dp</dimen>
 	<dimen name="material_showcase_target_padding">60dp</dimen>
 </resources>
